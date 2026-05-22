@@ -99,6 +99,19 @@ body {
   }
 }
 
+/* ── Mobile bottom nav clearance ────────────────────── */
+@media (max-width: 768px) {
+  body {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ── Skeleton shimmer ────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
 /* ── Smooth links & buttons ──────────────────────────── */
 a,
 button {

@@ -1,11 +1,13 @@
 from rest_framework import generics
+from rest_framework.permissions import AllowAny
 from .models import Trail
 from .serializers import TrailListSerializer, TrailDetailSerializer
 
 
 class TrailListView(generics.ListAPIView):
     """Returns all published trails."""
-    serializer_class = TrailListSerializer
+    serializer_class   = TrailListSerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         queryset = Trail.objects.filter(is_published=True)
@@ -26,5 +28,6 @@ class TrailListView(generics.ListAPIView):
 class TrailDetailView(generics.RetrieveAPIView):
     """Returns a single trail by its slug."""
     serializer_class   = TrailDetailSerializer
+    permission_classes = [AllowAny]
     queryset           = Trail.objects.filter(is_published=True)
     lookup_field       = 'slug'

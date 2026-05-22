@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
+import { TrailDetailSkeleton } from '../components/Skeleton'
 import {
   getTrail, getSavedTrails, saveTrail, unsaveTrail,
   getReviews, submitReview, deleteReview,
@@ -84,6 +85,7 @@ export default function TrailDetail() {
   const [allTrails, setAllTrails]       = useState([])
   const [groupSize, setGroupSize]       = useState(1)
   const [currency, setCurrency]         = useState('USD')
+  const [highlightedDay, setHighlightedDay] = useState(null)
   const isMobile                        = useMobile()
   const scrolling                       = useRef(false)
 
@@ -220,11 +222,7 @@ export default function TrailDetail() {
 
   const elev = useMemo(() => trail ? buildElevPath(trail.itinerary) : null, [trail])
 
-  if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F7F5F0' }}>
-      <p style={{ color: '#AAA', fontFamily: 'DM Sans, sans-serif' }}>Loading trail...</p>
-    </div>
-  )
+  if (loading) return <TrailDetailSkeleton />
   if (error) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F7F5F0' }}>
       <p style={{ color: '#E24B4A', fontFamily: 'DM Sans, sans-serif' }}>{error}</p>
@@ -254,7 +252,14 @@ export default function TrailDetail() {
       {/* ── HERO ────────────────────────────────────────────── */}
       <div style={{ position: 'relative', height: '100vh', minHeight: '680px', overflow: 'hidden' }}>
 
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, #080F1A 0%, #0D1F2D 22%, #122A1E 55%, #1A3A2A 80%, #2D5A3D 100%)' }} />
+        {trail.cover_image_url ? (
+          <>
+            <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${trail.cover_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(8,15,26,0.55) 0%, rgba(13,31,45,0.6) 22%, rgba(18,42,30,0.72) 55%, rgba(26,58,42,0.92) 80%, #1A3A2A 100%)' }} />
+          </>
+        ) : (
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, #080F1A 0%, #0D1F2D 22%, #122A1E 55%, #1A3A2A 80%, #2D5A3D 100%)' }} />
+        )}
 
         {HERO_STARS.map((s, i) => (
           <div key={i} style={{
@@ -492,7 +497,7 @@ export default function TrailDetail() {
               </p>
               <svg
                 viewBox={`0 0 ${elev.W} ${elev.H}`}
-                style={{ width: '100%', height: 'auto', display: 'block' }}
+                style={{ width: '100%', height: 'auto', display: 'block', cursor: 'pointer' }}
                 onMouseMove={e => {
                   const rect = e.currentTarget.getBoundingClientRect()
                   const mx = (e.clientX - rect.left) * (elev.W / rect.width)
@@ -505,6 +510,28 @@ export default function TrailDetail() {
                   setHoveredDot(minDist < 20 ? closest : null)
                 }}
                 onMouseLeave={() => setHoveredDot(null)}
+                onClick={e => {
+                  const rect = e.currentTarget.getBoundingClientRect()
+                  const mx = (e.clientX - rect.left) * (elev.W / rect.width)
+                  const my = (e.clientY - rect.top)  * (elev.H / rect.height)
+                  let closest = null, minDist = Infinity
+                  elev.pts.forEach(([x, y], i) => {
+                    const d = Math.sqrt((x - mx) ** 2 + (y - my) ** 2)
+                    if (d < minDist) { minDist = d; closest = i }
+                  })
+                  if (minDist < 24) {
+                    const day = elev.days[closest]
+                    setHighlightedDay(day.day)
+                    const el = document.getElementById(`itinerary-day-${day.day}`)
+                    if (el) {
+                      scrollTo('itinerary')
+                      setTimeout(() => {
+                        const top = el.getBoundingClientRect().top + window.scrollY - NAVBAR_H - SECNAV_H - 12
+                        window.scrollTo({ top, behavior: 'smooth' })
+                      }, 950)
+                    }
+                  }
+                }}
               >
                 <defs>
                   <linearGradient id="elevGrad" x1="0" y1="0" x2="0" y2="1">
@@ -518,14 +545,17 @@ export default function TrailDetail() {
                 })}
                 <path d={elev.area} fill="url(#elevGrad)" />
                 <path d={elev.line} fill="none" stroke="#C4973A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                {elev.pts.map(([x, y], i) => (
-                  <circle key={i} cx={x} cy={y}
-                    r={i === elev.peakIdx ? 4.5 : hoveredDot === i ? 4 : 2.5}
-                    fill={i === elev.peakIdx ? '#C4973A' : '#D4B87A'}
-                    stroke={(i === elev.peakIdx || hoveredDot === i) ? '#F7F5F0' : 'none'}
-                    strokeWidth="2"
-                  />
-                ))}
+                {elev.pts.map(([x, y], i) => {
+                  const isHighlighted = highlightedDay === elev.days[i]?.day
+                  return (
+                    <circle key={i} cx={x} cy={y}
+                      r={i === elev.peakIdx ? 4.5 : (hoveredDot === i || isHighlighted) ? 5 : 2.5}
+                      fill={isHighlighted ? '#FFFFFF' : i === elev.peakIdx ? '#C4973A' : '#D4B87A'}
+                      stroke={(i === elev.peakIdx || hoveredDot === i || isHighlighted) ? (isHighlighted ? '#C4973A' : '#F7F5F0') : 'none'}
+                      strokeWidth={isHighlighted ? 2.5 : 2}
+                    />
+                  )
+                })}
                 <text
                   x={elev.pts[elev.peakIdx][0]}
                   y={Math.max(10, elev.pts[elev.peakIdx][1] - 9)}
@@ -559,8 +589,9 @@ export default function TrailDetail() {
                   )
                 })()}
               </svg>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', alignItems: 'center' }}>
                 <span style={{ fontSize: '11px', color: '#CCC' }}>Day {elev.days[0].day} · {elev.days[0].altitude_m.toLocaleString()}m</span>
+                <span style={{ fontSize: '11px', color: '#DDD', fontStyle: 'italic' }}>Click a dot to jump to that day ↓</span>
                 <span style={{ fontSize: '11px', color: '#CCC' }}>Day {elev.days[elev.days.length - 1].day} · {elev.days[elev.days.length - 1].altitude_m.toLocaleString()}m</span>
               </div>
             </div>
@@ -591,6 +622,59 @@ export default function TrailDetail() {
               </p>
             </div>
           )}
+          {/* ── Best Season Calendar ── */}
+          {(() => {
+            const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+            const seasons = trail.best_seasons?.toLowerCase() || ''
+            const monthRating = MONTHS.map((m, i) => {
+              const mo = m.toLowerCase()
+              if (seasons.includes(mo)) return 'best'
+              if (i === 5 || i === 6 || i === 7) return 'avoid'
+              if (i === 11 || i === 0) return 'poor'
+              return 'ok'
+            })
+            const COLOR = {
+              best:  { bg: '#EAF3DE', text: '#2E7D32', label: 'Best' },
+              ok:    { bg: '#FFF8E1', text: '#8D6E00', label: 'OK' },
+              poor:  { bg: '#F5F5F5', text: '#9E9E9E', label: 'Poor' },
+              avoid: { bg: '#FBE9E7', text: '#BF360C', label: 'Avoid' },
+            }
+            return (
+              <div style={{ marginTop: '32px', backgroundColor: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: '20px', padding: isMobile ? '20px' : '28px 32px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+                  <p style={{ fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#C0BAB2' }}>
+                    Best Time to Trek
+                  </p>
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    {Object.entries(COLOR).map(([key, { bg, text, label }]) => (
+                      <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <div style={{ width: '10px', height: '10px', borderRadius: '3px', backgroundColor: bg, border: `1px solid ${text}33` }} />
+                        <span style={{ fontSize: '11px', color: '#888' }}>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '4px' }}>
+                  {MONTHS.map((m, i) => {
+                    const r = monthRating[i]
+                    const { bg, text } = COLOR[r]
+                    return (
+                      <div key={m} style={{ textAlign: 'center' }}>
+                        <div style={{ backgroundColor: bg, borderRadius: '6px', padding: isMobile ? '8px 2px' : '10px 4px', marginBottom: '4px' }}>
+                          <span style={{ fontSize: isMobile ? '16px' : '18px' }}>
+                            {r === 'best' ? '✦' : r === 'avoid' ? '✕' : r === 'poor' ? '·' : '○'}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '9px', color: text, fontWeight: r === 'best' ? 700 : 400, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          {m}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })()}
         </section>
 
         <div style={{ borderTop: '1px solid #E8E5E0' }} />
@@ -615,8 +699,21 @@ export default function TrailDetail() {
               const prevAlt     = dayIdx > 0 ? trail.itinerary[dayIdx - 1].altitude_m : 0
               const gainM       = day.altitude_m - prevAlt
               const acclimWarn  = gainM > 500 && day.altitude_m > 3000
+              const isLinked    = highlightedDay === day.day
               return (
-                <div key={day.day} style={{ paddingLeft: '40px', paddingBottom: '44px', position: 'relative' }}>
+                <div
+                  key={day.day}
+                  id={`itinerary-day-${day.day}`}
+                  onClick={() => setHighlightedDay(isLinked ? null : day.day)}
+                  style={{
+                    paddingLeft: '40px', paddingBottom: '44px', position: 'relative',
+                    cursor: 'pointer',
+                    backgroundColor: isLinked ? 'rgba(196,151,58,0.07)' : 'transparent',
+                    marginLeft: '-16px', paddingRight: '16px', marginRight: '-16px',
+                    borderRadius: '12px',
+                    transition: 'background-color 0.3s',
+                  }}
+                >
                   {/* Timeline dot — larger + glowing at high points */}
                   <div style={{
                     position: 'absolute', top: '4px',
@@ -729,52 +826,97 @@ export default function TrailDetail() {
             </div>
           )}
 
-          {/* ── Permit cost calculator + currency converter ── */}
-          {trail.permits.length > 0 && (
-            <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: '20px', padding: isMobile ? '20px' : '28px 32px', marginBottom: '32px' }}>
-              <h3 style={{ fontFamily: 'Fraunces, serif', fontSize: '18px', fontWeight: 700, color: '#1A3A2A', marginBottom: '20px' }}>
-                Permit Cost Calculator
-              </h3>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '13px', color: '#666' }}>Group size:</span>
-                  <button onClick={() => setGroupSize(g => Math.max(1, g - 1))} style={{ width: '28px', height: '28px', borderRadius: '8px', border: '1px solid #DDD', backgroundColor: '#FAFAF8', cursor: 'pointer', fontSize: '16px', lineHeight: 1 }}>−</button>
-                  <span style={{ fontSize: '15px', fontWeight: 700, color: '#1A3A2A', minWidth: '24px', textAlign: 'center' }}>{groupSize}</span>
-                  <button onClick={() => setGroupSize(g => g + 1)} style={{ width: '28px', height: '28px', borderRadius: '8px', border: '1px solid #DDD', backgroundColor: '#FAFAF8', cursor: 'pointer', fontSize: '16px', lineHeight: 1 }}>+</button>
+          {/* ── Full Trip Budget Estimator ── */}
+          {(() => {
+            const permitTotal  = trail.permits.reduce((s, p) => s + parseFloat(p.cost_usd), 0)
+            const teahouseNight = trail.trek_style === 'luxury' ? 120 : trail.trek_style === 'camping' ? 0 : 18
+            const accomTotal   = teahouseNight * trail.duration_days
+            const guidePerDay  = 35
+            const porterPerDay = 25
+            const [includeGuide, setIncludeGuide]   = [false, () => {}]
+            const [includePorter, setIncludePorter] = [false, () => {}]
+
+            const rows = [
+              { label: 'Permits', sub: `${trail.permits.length} required · per person`, usd: permitTotal * groupSize },
+              { label: 'Accommodation', sub: trail.trek_style === 'teahouse' ? `~$${teahouseNight}/night × ${trail.duration_days} nights` : trail.trek_style === 'camping' ? 'Camping — included in agency fee' : `~$${teahouseNight}/night luxury lodges`, usd: accomTotal },
+              { label: 'Meals', sub: `~$15–25/day × ${trail.duration_days} days (estimate)`, usd: 20 * trail.duration_days },
+              { label: 'Guide (optional)', sub: `$${guidePerDay}/day · 1 guide for group`, usd: guidePerDay * trail.duration_days },
+              { label: 'Porter (optional)', sub: `$${porterPerDay}/day · per porter`, usd: porterPerDay * trail.duration_days },
+            ]
+            const essentialTotal = (permitTotal * groupSize + accomTotal + 20 * trail.duration_days)
+            const fullTotal = essentialTotal + guidePerDay * trail.duration_days + porterPerDay * trail.duration_days
+
+            return (
+              <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: '20px', padding: isMobile ? '20px' : '28px 32px', marginBottom: '32px' }}>
+                <h3 style={{ fontFamily: 'Fraunces, serif', fontSize: '18px', fontWeight: 700, color: '#1A3A2A', marginBottom: '6px' }}>
+                  Trip Budget Estimator
+                </h3>
+                <p style={{ fontSize: '13px', color: '#AAA', marginBottom: '20px' }}>Rough estimates. Actual costs vary by season and group size.</p>
+
+                {/* Controls */}
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '13px', color: '#666' }}>Group size:</span>
+                    <button onClick={() => setGroupSize(g => Math.max(1, g - 1))} style={{ width: '28px', height: '28px', borderRadius: '8px', border: '1px solid #DDD', backgroundColor: '#FAFAF8', cursor: 'pointer', fontSize: '16px', lineHeight: 1 }}>−</button>
+                    <span style={{ fontSize: '15px', fontWeight: 700, color: '#1A3A2A', minWidth: '24px', textAlign: 'center' }}>{groupSize}</span>
+                    <button onClick={() => setGroupSize(g => g + 1)} style={{ width: '28px', height: '28px', borderRadius: '8px', border: '1px solid #DDD', backgroundColor: '#FAFAF8', cursor: 'pointer', fontSize: '16px', lineHeight: 1 }}>+</button>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '13px', color: '#666' }}>Currency:</span>
+                    {['USD', 'NPR', 'EUR', 'GBP'].map(c => (
+                      <button key={c} onClick={() => setCurrency(c)} style={{
+                        padding: '4px 12px', borderRadius: '20px', border: 'none', cursor: 'pointer',
+                        fontSize: '12px', fontFamily: 'DM Sans, sans-serif',
+                        backgroundColor: currency === c ? '#1A3A2A' : '#F0EDE8',
+                        color: currency === c ? '#FFFFFF' : '#555',
+                      }}>{c}</button>
+                    ))}
+                  </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '13px', color: '#666' }}>Currency:</span>
-                  {['USD', 'NPR', 'EUR', 'GBP'].map(c => (
-                    <button key={c} onClick={() => setCurrency(c)} style={{
-                      padding: '4px 12px', borderRadius: '20px', border: 'none', cursor: 'pointer',
-                      fontSize: '12px', fontFamily: 'DM Sans, sans-serif',
-                      backgroundColor: currency === c ? '#1A3A2A' : '#F0EDE8',
-                      color: currency === c ? '#FFFFFF' : '#555',
-                    }}>{c}</button>
-                  ))}
+
+                {/* Cost rows */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
+                  {rows.map((row, idx) => {
+                    const isOptional = idx >= 3
+                    const amt = row.usd * FX[currency]
+                    return (
+                      <div key={row.label} style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: '10px 14px', borderRadius: '10px',
+                        backgroundColor: isOptional ? '#FAFAF8' : '#F7FAF7',
+                        opacity: isOptional ? 0.75 : 1,
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '14px', color: '#333', fontWeight: 500 }}>{row.label}</span>
+                          {isOptional && <span style={{ marginLeft: '6px', fontSize: '10px', color: '#C4973A', textTransform: 'uppercase', fontWeight: 600 }}>optional</span>}
+                          <p style={{ fontSize: '11px', color: '#AAA', marginTop: '2px' }}>{row.sub}</p>
+                        </div>
+                        <span style={{ fontSize: '15px', fontWeight: 700, color: isOptional ? '#999' : '#1A3A2A', flexShrink: 0, marginLeft: '16px' }}>
+                          {FX_SYM[currency]}{amt.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Totals */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', backgroundColor: '#F0EDE8', borderRadius: '10px' }}>
+                    <span style={{ fontSize: '13px', color: '#666' }}>Essentials only (permits + accommodation + meals)</span>
+                    <span style={{ fontSize: '16px', fontWeight: 700, color: '#1A3A2A' }}>
+                      {FX_SYM[currency]}{(essentialTotal * FX[currency]).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', backgroundColor: '#1A3A2A', borderRadius: '10px' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#FFFFFF' }}>Full estimate (+ guide + porter)</span>
+                    <span style={{ fontSize: '20px', fontWeight: 700, color: '#C4973A' }}>
+                      {FX_SYM[currency]}{(fullTotal * FX[currency]).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {trail.permits.map(p => {
-                  const total = parseFloat(p.cost_usd) * groupSize * FX[currency]
-                  return (
-                    <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', backgroundColor: '#FAFAF8', borderRadius: '10px' }}>
-                      <span style={{ fontSize: '14px', color: '#333' }}>{p.name}</span>
-                      <span style={{ fontSize: '15px', fontWeight: 700, color: '#1A3A2A' }}>
-                        {FX_SYM[currency]}{total.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                      </span>
-                    </div>
-                  )
-                })}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', backgroundColor: '#1A3A2A', borderRadius: '10px', marginTop: '4px' }}>
-                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#FFFFFF' }}>Total for {groupSize} person{groupSize !== 1 ? 's' : ''}</span>
-                  <span style={{ fontSize: '18px', fontWeight: 700, color: '#C4973A' }}>
-                    {FX_SYM[currency]}{(trail.permits.reduce((s, p) => s + parseFloat(p.cost_usd), 0) * groupSize * FX[currency]).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* Logistics quick-facts row */}
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '16px' }}>
@@ -900,6 +1042,53 @@ export default function TrailDetail() {
               ))}
             </div>
           )}
+        </section>
+
+        <div style={{ borderTop: '1px solid #E8E5E0' }} />
+
+        {/* ── EMERGENCY CONTACTS ────────────────────────────── */}
+        <section style={{ padding: '72px 0' }}>
+          <p style={{ fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C4973A', marginBottom: '12px' }}>✦ Safety</p>
+          <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: isMobile ? '28px' : '40px', fontWeight: 700, color: '#1A3A2A', marginBottom: '12px' }}>
+            Emergency Contacts
+          </h2>
+          <p style={{ fontSize: '15px', color: '#888', marginBottom: '36px', lineHeight: 1.7 }}>
+            Save these numbers before you start. Cell coverage is limited above 4,000m — download offline maps and share your itinerary with someone at home.
+          </p>
+          {(() => {
+            const CONTACTS = [
+              { icon: '🚁', title: 'Helicopter Rescue', org: 'Fishtail Air / Altitude Air', number: '+977 1 4412 888', note: 'Requires rescue insurance. Arrange via your trekking agency or teahouse.' },
+              { icon: '🏥', title: 'Himalayan Rescue Association', org: 'HRA Aid Posts (Pheriche / Manang)', number: '+977 1 4440 292', note: 'Free consultation at HRA aid posts on the EBC and Annapurna routes.' },
+              { icon: '🚔', title: 'Nepal Police Emergency', org: 'National Emergency', number: '100', note: 'Works from any phone. Tourist Police hotline: +977 1 4247041.' },
+              { icon: '🏔', title: 'Nepal Tourism Board', org: 'Tourist Helpline 24/7', number: '1136', note: 'For missing trekkers, permit issues, and emergency coordination.' },
+              { icon: '💊', title: 'CIWEC Hospital', org: 'Kathmandu — travel medicine', number: '+977 1 4424 111', note: 'Specialist altitude sickness treatment and evacuation advice.' },
+            ]
+            const regionContacts = {
+              'Khumbu':          { icon: '📡', title: 'Khumbu Climbing Center', org: 'Namche Bazaar', number: '+977 38 540 246', note: 'Local rescue coordination for the EBC region.' },
+              'Annapurna':       { icon: '📡', title: 'Annapurna Conservation Area', org: 'ACAP Office, Pokhara', number: '+977 61 690 233', note: 'Permit checks and emergency coordination for the Annapurna circuit.' },
+              'Langtang':        { icon: '📡', title: 'Langtang National Park', org: 'Park HQ, Dhunche', number: '+977 1 4220 972', note: 'Missing trekker reports and rescue coordination.' },
+              'Everest':         { icon: '📡', title: 'Khumbu Region HQ', org: 'Namche Bazaar', number: '+977 38 540 246', note: 'Local rescue coordination for the Everest region.' },
+            }
+            const extra = regionContacts[trail.region]
+            const allContacts = extra ? [extra, ...CONTACTS] : CONTACTS
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px' }}>
+                {allContacts.map(c => (
+                  <div key={c.title} style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: '16px', padding: '20px 22px', display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                    <div style={{ fontSize: '24px', flexShrink: 0, marginTop: '2px' }}>{c.icon}</div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: '13px', fontWeight: 700, color: '#1A3A2A', marginBottom: '2px' }}>{c.title}</p>
+                      <p style={{ fontSize: '11px', color: '#AAA', marginBottom: '6px' }}>{c.org}</p>
+                      <a href={`tel:${c.number}`} style={{ fontSize: '16px', fontWeight: 700, color: '#C4973A', textDecoration: 'none', fontFamily: 'Fraunces, serif', display: 'block', marginBottom: '6px' }}>
+                        {c.number}
+                      </a>
+                      <p style={{ fontSize: '12px', color: '#666', lineHeight: 1.6 }}>{c.note}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
         </section>
 
         <div style={{ borderTop: '1px solid #E8E5E0' }} />

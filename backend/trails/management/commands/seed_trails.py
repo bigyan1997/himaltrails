@@ -42,6 +42,10 @@ TRAILS = [
         "is_published": True,
         "latitude": "27.988056",
         "longitude": "86.925278",
+        "cover_image_url": "https://images.unsplash.com/photo-1516592673884-4a382d1124c2?w=1200&q=80&auto=format&fit=crop",
+        "condition_status": "open",
+        "condition_notes": "Trail open. Khumbu Icefall route active for climbers. Snow above 5000m — crampons recommended.",
+        "condition_updated": "2026-04-15",
         "itinerary": [
             {"day": 1,  "title": "Lukla → Phakding",            "description": "Fly into Tenzing-Hillary Airport (2,860 m) and descend to Phakding.",                                          "altitude_m": 2652,  "walk_hours": 3.5},
             {"day": 2,  "title": "Phakding → Namche Bazaar",    "description": "Cross the famous Hillary Bridge and climb steeply to the Sherpa capital.",                                    "altitude_m": 3440,  "walk_hours": 5.5},
@@ -126,6 +130,10 @@ TRAILS = [
         "is_published": True,
         "latitude": "28.545556",
         "longitude": "84.383333",
+        "cover_image_url": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80&auto=format&fit=crop",
+        "condition_status": "open",
+        "condition_notes": "All passes open. Thorong La (5,416m) clear. Check forecasts before crossing — sudden snow possible Oct–Nov.",
+        "condition_updated": "2026-04-20",
         "itinerary": [
             {"day": 1,  "title": "Kathmandu → Besisahar",       "description": "Drive or bus from Kathmandu to Besisahar, the circuit's start point.",                           "altitude_m": 760,  "walk_hours": 0.0},
             {"day": 2,  "title": "Besisahar → Bahundanda",      "description": "Enter the Marsyangdi valley — lush, warm, subtropical.",                                         "altitude_m": 1310, "walk_hours": 5.5},
@@ -205,6 +213,10 @@ TRAILS = [
         "is_published": True,
         "latitude": "28.211667",
         "longitude": "85.516667",
+        "cover_image_url": "https://images.unsplash.com/photo-1605367283286-fb8dbe3406e3?w=1200&q=80&auto=format&fit=crop",
+        "condition_status": "open",
+        "condition_notes": "Trail fully open. River levels normal. Langtang village reconstruction ongoing but lodges operational.",
+        "condition_updated": "2026-04-18",
         "itinerary": [
             {"day": 1, "title": "Kathmandu → Syabrubesi",        "description": "7-hour drive (or morning bus) from Kathmandu through Trishuli valley to the trailhead.",         "altitude_m": 1503, "walk_hours": 0.0},
             {"day": 2, "title": "Syabrubesi → Lama Hotel",       "description": "Steep climb through bamboo and rhododendron forest above the Langtang Khola.",                  "altitude_m": 2470, "walk_hours": 5.5},
@@ -274,6 +286,10 @@ TRAILS = [
         "is_published": True,
         "latitude": "27.951389",
         "longitude": "86.699722",
+        "cover_image_url": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=1200&q=80&auto=format&fit=crop",
+        "condition_status": "open",
+        "condition_notes": "Gokyo trail open. Lakes unfrozen. Cho La pass suitable for experienced trekkers with microspikes.",
+        "condition_updated": "2026-04-22",
         "itinerary": [
             {"day": 1,  "title": "Lukla → Phakding",             "description": "Fly into Lukla (2,860 m) and descend to Phakding.",                                                         "altitude_m": 2652, "walk_hours": 3.5},
             {"day": 2,  "title": "Phakding → Namche Bazaar",     "description": "Cross the Hillary Bridge and climb to the Sherpa capital.",                                                  "altitude_m": 3440, "walk_hours": 5.5},

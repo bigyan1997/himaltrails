@@ -14,6 +14,108 @@ import useMobile from '../hooks/useMobile'
 const CATEGORIES = ['clothing', 'gear', 'documents', 'medical', 'food', 'other']
 const CAT_LABEL  = { clothing: 'Clothing', gear: 'Gear', documents: 'Documents', medical: 'Medical', food: 'Food & Water', other: 'Other' }
 
+function getPackingSuggestions(trail) {
+  const alt = trail.max_altitude_m || 0
+  const days = trail.duration_days || 7
+  const isHighAlt = alt > 4000
+  const isVeryHigh = alt > 5000
+
+  const suggestions = [
+    { name: 'Passport + copies', category: 'documents' },
+    { name: 'Travel insurance certificate', category: 'documents' },
+    { name: 'TIMS card & permits', category: 'documents' },
+    { name: 'Emergency contact card', category: 'documents' },
+    { name: 'First aid kit', category: 'medical' },
+    { name: 'Diamox (altitude sickness tablets)', category: 'medical' },
+    { name: 'Ibuprofen & paracetamol', category: 'medical' },
+    { name: 'Blister kit & moleskin', category: 'medical' },
+    { name: 'Water purification tablets', category: 'medical' },
+    { name: 'Sunscreen SPF 50+', category: 'medical' },
+    { name: 'Lip balm with SPF', category: 'medical' },
+    { name: 'Trekking boots (broken in)', category: 'clothing' },
+    { name: 'Moisture-wicking base layers ×3', category: 'clothing' },
+    { name: 'Trekking trousers ×2', category: 'clothing' },
+    { name: 'Warm fleece or down jacket', category: 'clothing' },
+    { name: 'Waterproof rain jacket', category: 'clothing' },
+    { name: 'Wool trekking socks ×4', category: 'clothing' },
+    { name: 'Sun hat + warm beanie', category: 'clothing' },
+    { name: 'Trekking poles', category: 'gear' },
+    { name: 'Headlamp + spare batteries', category: 'gear' },
+    { name: 'Daypack (25–30L)', category: 'gear' },
+    { name: 'Sleeping bag liner', category: 'gear' },
+    { name: 'Offline maps (Maps.me / AllTrails)', category: 'gear' },
+    { name: 'Power bank (20,000mAh)', category: 'gear' },
+    { name: 'Water bottle 1L ×2', category: 'food' },
+    { name: 'Energy bars / trail snacks', category: 'food' },
+    { name: 'Electrolyte sachets', category: 'food' },
+  ]
+
+  if (isHighAlt) {
+    suggestions.push({ name: 'Heavy down jacket (−10°C rated)', category: 'clothing' })
+    suggestions.push({ name: 'Thermal base layer (merino)', category: 'clothing' })
+    suggestions.push({ name: 'Balaclava', category: 'clothing' })
+    suggestions.push({ name: 'Mountaineering gloves', category: 'clothing' })
+    suggestions.push({ name: 'Gaiters', category: 'gear' })
+  }
+  if (isVeryHigh) {
+    suggestions.push({ name: 'Microspikes / crampons', category: 'gear' })
+    suggestions.push({ name: 'High-altitude sleeping bag (−20°C)', category: 'gear' })
+    suggestions.push({ name: 'Pulse oximeter', category: 'medical' })
+    suggestions.push({ name: 'Dexamethasone (emergency AMS)', category: 'medical' })
+  }
+  if (days > 10) {
+    suggestions.push({ name: 'Laundry soap strips', category: 'other' })
+    suggestions.push({ name: 'Extra memory card', category: 'gear' })
+  }
+  return suggestions
+}
+
+function PackingGenerator({ savedTrails, packingItems, onAdd }) {
+  const [selectedSlug, setSelectedSlug] = useState(savedTrails[0]?.trail.slug || '')
+  const [adding, setAdding] = useState(false)
+  const [done, setDone] = useState(false)
+
+  const trail = savedTrails.find(s => s.trail.slug === selectedSlug)?.trail
+  if (!trail) return null
+
+  const suggestions = getPackingSuggestions(trail)
+  const existing = new Set(packingItems.map(i => i.name.toLowerCase()))
+  const newSuggestions = suggestions.filter(s => !existing.has(s.name.toLowerCase()))
+
+  const handleGenerate = async () => {
+    if (!newSuggestions.length) { setDone(true); return }
+    setAdding(true)
+    for (const s of newSuggestions) await onAdd(s.name, s.category)
+    setAdding(false)
+    setDone(true)
+  }
+
+  return (
+    <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #C8E6C9', borderRadius: '16px', padding: '20px 24px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: '13px', fontWeight: 700, color: '#1A3A2A', marginBottom: '4px' }}>🎒 Generate packing list for a trail</p>
+          <p style={{ fontSize: '12px', color: '#888' }}>
+            {newSuggestions.length > 0
+              ? `${newSuggestions.length} suggested items based on ${trail.name} (${trail.max_altitude_m?.toLocaleString()}m, ${trail.duration_days}d)`
+              : 'All suggested items already in your list.'}
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
+          <select value={selectedSlug} onChange={e => { setSelectedSlug(e.target.value); setDone(false) }}
+            style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid #DDD', fontSize: '13px', fontFamily: 'DM Sans, sans-serif', outline: 'none', color: '#333', backgroundColor: '#FAFAF8', cursor: 'pointer' }}>
+            {savedTrails.map(s => <option key={s.trail.slug} value={s.trail.slug}>{s.trail.name}</option>)}
+          </select>
+          <button onClick={handleGenerate} disabled={adding || done || !newSuggestions.length}
+            style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: adding || done || !newSuggestions.length ? 'not-allowed' : 'pointer', backgroundColor: done ? '#2E7D32' : '#1A3A2A', color: '#FFF', fontSize: '13px', fontWeight: 600, fontFamily: 'DM Sans, sans-serif', whiteSpace: 'nowrap' }}>
+            {adding ? 'Adding…' : done ? '✓ Added' : 'Add all'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
@@ -380,6 +482,15 @@ export default function Dashboard() {
         {/* ── Packing List tab ── */}
         {tab === 'packing' && (
           <div style={{ maxWidth: '680px' }}>
+
+            {/* Trail-aware generator */}
+            {savedTrails.length > 0 && (
+              <PackingGenerator savedTrails={savedTrails} packingItems={packingItems} onAdd={async (name, cat) => {
+                const res = await addPackingItem({ name, category: cat })
+                setPackingItems(items => [...items, res.data])
+              }} />
+            )}
+
             <form onSubmit={handleAddItem} style={{ display: 'flex', gap: '10px', marginBottom: '32px', flexDirection: isMobile ? 'column' : undefined }}>
               <input value={newItem} onChange={e => setNewItem(e.target.value)} placeholder="Add an item…"
                 style={{ flex: 1, padding: '13px 18px', borderRadius: '12px', border: '1px solid #DDD', fontSize: '15px', fontFamily: 'DM Sans, sans-serif', outline: 'none', backgroundColor: '#FFFFFF' }}

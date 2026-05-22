@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { getTrails } from '../services/api'
 import Navbar from '../components/Navbar'
+import { TrailCardSkeleton } from '../components/Skeleton'
 import useMobile from '../hooks/useMobile'
 
 const COMPARE_ROWS = [
@@ -315,7 +316,9 @@ export default function TrailList() {
       {/* ── Cards ── */}
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: isMobile ? '24px 20px' : '48px 48px' }}>
         {loading ? (
-          <p style={{ color: '#AAA', textAlign: 'center', padding: '80px 0' }}>Loading trails...</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {[1, 2, 3].map(i => <TrailCardSkeleton key={i} />)}
+          </div>
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
             <p style={{ fontSize: '32px', marginBottom: '12px' }}>🏔️</p>
@@ -344,6 +347,40 @@ export default function TrailList() {
                     e.currentTarget.style.boxShadow = 'none'
                   }}
                 >
+                  {/* Hero image strip */}
+                  {trail.cover_image_url && (
+                    <div style={{
+                      height: isMobile ? '160px' : '200px',
+                      backgroundImage: `url(${trail.cover_image_url})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      position: 'relative',
+                    }}>
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(26,58,42,0.55) 100%)' }} />
+                      {/* Condition badge */}
+                      {trail.condition_status && trail.condition_status !== 'open' && (
+                        <span style={{
+                          position: 'absolute', top: '12px', right: '12px',
+                          fontSize: '11px', fontWeight: 600, padding: '4px 12px',
+                          borderRadius: '20px', backdropFilter: 'blur(8px)',
+                          backgroundColor: trail.condition_status === 'closed' ? 'rgba(191,54,12,0.85)' : 'rgba(245,127,23,0.85)',
+                          color: '#FFFFFF',
+                        }}>
+                          {trail.condition_status === 'closed' ? '⛔ Closed' : '⚠ Partial'}
+                        </span>
+                      )}
+                      {trail.condition_status === 'open' && (
+                        <span style={{
+                          position: 'absolute', top: '12px', right: '12px',
+                          fontSize: '11px', fontWeight: 600, padding: '4px 12px',
+                          borderRadius: '20px', backdropFilter: 'blur(8px)',
+                          backgroundColor: 'rgba(46,125,50,0.75)', color: '#FFFFFF',
+                        }}>
+                          ✓ Open
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <div style={{ padding: isMobile ? '20px' : '36px 40px' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px', flexDirection: isMobile ? 'column' : undefined }}>
 

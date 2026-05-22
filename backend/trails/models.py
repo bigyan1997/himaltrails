@@ -44,6 +44,20 @@ class Trail(models.Model):
     latitude     = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude    = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
 
+    # ─── Media ───────────────────────────────────────────────────
+    cover_image_url = models.URLField(max_length=600, blank=True)
+
+    # ─── Trail condition ─────────────────────────────────────────
+    CONDITION_CHOICES = [
+        ('open',    'Open'),
+        ('partial', 'Partial restrictions'),
+        ('closed',  'Closed'),
+        ('unknown', 'Unknown'),
+    ]
+    condition_status = models.CharField(max_length=20, choices=CONDITION_CHOICES, default='open')
+    condition_notes  = models.TextField(blank=True)
+    condition_updated = models.DateField(null=True, blank=True)
+
     # ─── Meta ────────────────────────────────────────────────────
     is_published = models.BooleanField(default=False)
     created_at   = models.DateTimeField(auto_now_add=True)

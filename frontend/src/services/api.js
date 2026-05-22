@@ -10,6 +10,29 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  res => res,
+  async err => {
+    const original = err.config;
+    if (err.response?.status === 401 && !original._retry) {
+      original._retry = true;
+      const refresh = localStorage.getItem("refresh_token");
+      if (refresh) {
+        try {
+          const { data } = await axios.post("http://127.0.0.1:8000/api/auth/token/refresh/", { refresh });
+          localStorage.setItem("access_token", data.access);
+          original.headers.Authorization = `Bearer ${data.access}`;
+          return api(original);
+        } catch {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+        }
+      }
+    }
+    return Promise.reject(err);
+  }
+);
+
 // Trails
 export const getTrails = () => api.get("/trails/");
 export const getTrail  = (slug) => api.get(`/trails/${slug}/`);

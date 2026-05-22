@@ -40,6 +40,8 @@ class TrailListSerializer(serializers.ModelSerializer):
             'duration_days', 'max_altitude_m', 'best_seasons',
             'trek_style', 'start_point', 'end_point',
             'latitude', 'longitude',
+            'cover_image_url',
+            'condition_status', 'condition_notes', 'condition_updated',
             'avg_rating', 'review_count',
         ]
 
@@ -71,6 +73,8 @@ class TrailDetailSerializer(serializers.ModelSerializer):
             'start_point', 'end_point', 'best_seasons',
             'permits_required', 'guide_required',
             'latitude', 'longitude',
+            'cover_image_url',
+            'condition_status', 'condition_notes', 'condition_updated',
             'avg_rating', 'review_count',
             'itinerary', 'permits', 'teahouses',
         ]
