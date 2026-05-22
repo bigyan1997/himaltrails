@@ -57,8 +57,9 @@ class TripPlanSerializer(serializers.ModelSerializer):
         fields = ['id', 'trail', 'trail_slug', 'start_date', 'end_date', 'notes', 'updated_at']
 
     def get_end_date(self, obj):
-        from datetime import timedelta
-        return (obj.start_date + timedelta(days=obj.trail.duration_days)).isoformat()
+        from datetime import timedelta, date
+        start = obj.start_date if isinstance(obj.start_date, date) else date.fromisoformat(obj.start_date)
+        return (start + timedelta(days=obj.trail.duration_days)).isoformat()
 
     def create(self, validated_data):
         from trails.models import Trail

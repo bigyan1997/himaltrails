@@ -250,6 +250,325 @@ TRAILS = [
         ],
     },
 
+    # ── Manaslu Circuit ───────────────────────────────────────────────────────
+    {
+        "name": "Manaslu Circuit Trek",
+        "slug": "manaslu-circuit",
+        "region": "Manaslu",
+        "description": (
+            "The Manaslu Circuit is Nepal's great undiscovered long-distance route, "
+            "circling the world's eighth-highest mountain (8,163 m) through some of "
+            "the most remote and culturally intact Himalayan villages. The trail "
+            "follows the Budhi Gandaki river gorge northward through subtropical "
+            "forest and bamboo, ascending to Tibetan Plateau-like landscapes at "
+            "Samagaon and Samdo before the dramatic single-day crossing of Larkya La "
+            "(5,160 m). A restricted area permit keeps visitor numbers low — this "
+            "feels like the Annapurna Circuit did thirty years ago."
+        ),
+        "highlights": (
+            "Larkya La pass (5,160 m) — full-day crossing of the main Himalayan divide\n"
+            "Samagaon village — Tibetan culture and monasteries at 3,520 m\n"
+            "Manaslu Base Camp side-trip from Samagaon\n"
+            "Budhi Gandaki gorge — dramatic cliffs and hanging bridges\n"
+            "Birendra Tal glacial lake near Samdo\n"
+            "Remote trail with far fewer trekkers than Everest or Annapurna"
+        ),
+        "distance_km": "177.00",
+        "elevation_gain_m": 5700,
+        "max_altitude_m": 5160,
+        "duration_days": 14,
+        "difficulty": "hard",
+        "trek_style": "teahouse",
+        "start_point": "Soti Khola",
+        "end_point": "Dharapani",
+        "best_seasons": "Mar–May, Sep–Nov",
+        "permits_required": True,
+        "guide_required": True,
+        "is_published": True,
+        "latitude": "28.546111",
+        "longitude": "84.559722",
+        "cover_image_url": "https://images.unsplash.com/photo-1600100397608-fe4af9e92ac0?w=1200&q=80&auto=format&fit=crop",
+        "condition_status": "open",
+        "condition_notes": "Larkya La open. Confirm pass conditions with your guide before departure — overnight snow can close it even mid-season.",
+        "condition_updated": "2026-04-20",
+        "itinerary": [
+            {"day": 1,  "title": "Kathmandu → Soti Khola",            "description": "Long drive (8–10 hrs) via Arughat to the trailhead at Soti Khola on the Budhi Gandaki.",         "altitude_m": 730,  "walk_hours": 0.0},
+            {"day": 2,  "title": "Soti Khola → Machha Khola",         "description": "Enter the Budhi Gandaki gorge on a narrow trail with several suspension bridges.",              "altitude_m": 930,  "walk_hours": 5.5},
+            {"day": 3,  "title": "Machha Khola → Jagat",              "description": "Subtropical forest gives way to higher scrub. Jagat is the restricted area permit checkpoint.", "altitude_m": 1340, "walk_hours": 6.5},
+            {"day": 4,  "title": "Jagat → Deng",                      "description": "The gorge deepens — waterfalls, cliffs, and hanging bridges.",                                   "altitude_m": 1860, "walk_hours": 6.0},
+            {"day": 5,  "title": "Deng → Namrung",                    "description": "Vegetation shifts to pine and juniper. First views of Himalayan peaks ahead.",                  "altitude_m": 2630, "walk_hours": 6.0},
+            {"day": 6,  "title": "Namrung → Samagaon",                "description": "Landscape turns Tibetan — mani walls, chortens, flat-roofed stone houses, yak herds.",        "altitude_m": 3519, "walk_hours": 6.5},
+            {"day": 7,  "title": "Samagaon — Acclimatise",            "description": "Rest day. Optional hike toward Manaslu Base Camp (4,800 m) or Pungen Glacier for views.",     "altitude_m": 3519, "walk_hours": 4.0},
+            {"day": 8,  "title": "Samagaon → Samdo",                  "description": "Short walk to the high Tibetan settlement of Samdo. Visit Birendra Tal glacial lake.",         "altitude_m": 3860, "walk_hours": 3.5},
+            {"day": 9,  "title": "Samdo → Dharamsala (high camp)",    "description": "Climb to the basic high camp shelters below Larkya La. Early night — big day tomorrow.",      "altitude_m": 4460, "walk_hours": 4.0},
+            {"day": 10, "title": "Larkya La → Bimthang",              "description": "Pre-dawn start, cross Larkya La (5,160 m), then long descent through moraine to green Bimthang.", "altitude_m": 3720, "walk_hours": 9.0},
+            {"day": 11, "title": "Bimthang → Tilije",                 "description": "Descend through apple orchards and oak forest. Manaslu still visible behind.",                "altitude_m": 2300, "walk_hours": 5.5},
+            {"day": 12, "title": "Tilije → Dharapani",                "description": "Join the Annapurna Circuit trail at Dharapani on the Marsyangdi river.",                      "altitude_m": 1860, "walk_hours": 4.0},
+            {"day": 13, "title": "Dharapani → Besisahar (drive)",     "description": "Jeep or local bus down the Marsyangdi valley to Besisahar.",                                  "altitude_m": 760,  "walk_hours": 0.0},
+            {"day": 14, "title": "Besisahar → Kathmandu (drive)",     "description": "Drive or bus back to Kathmandu — approximately 6 hours.",                                     "altitude_m": 1400, "walk_hours": 0.0},
+        ],
+        "permits": [
+            {
+                "name": "Manaslu Restricted Area Permit",
+                "permit_type": "restricted_area",
+                "cost_usd": 100.00,
+                "where_to_buy": "Department of Immigration, Kathmandu (Kalikasthan)",
+                "notes": "USD 100 per week (Sep–Nov & Mar–May); USD 75/week (Dec–Feb). Minimum 2 trekkers + licensed guide mandatory.",
+            },
+            {
+                "name": "Manaslu Conservation Area Permit (MCAP)",
+                "permit_type": "conservation",
+                "cost_usd": 30.00,
+                "where_to_buy": "Nepal Tourism Board, Kathmandu; or MCAP checkpost at Jagat",
+                "notes": "Required in addition to the Restricted Area Permit. Covers the Manaslu Conservation Area.",
+            },
+            {
+                "name": "TIMS Card",
+                "permit_type": "tims",
+                "cost_usd": 20.00,
+                "where_to_buy": "Nepal Tourism Board office, Kathmandu (Pradarshani Marg)",
+                "notes": "Individual trekkers $20; guided trekkers $10.",
+            },
+        ],
+        "teahouses": [
+            {"name": "Lhasa Guest House",   "location": "Jagat",      "altitude_m": 1340, "price_usd_min": 5,  "price_usd_max": 12, "has_wifi": False, "has_hot_shower": False, "day_on_trail": 3,  "notes": "One of the better lodges on the lower Budhi Gandaki. Friendly family."},
+            {"name": "Manaslu Hotel",       "location": "Namrung",    "altitude_m": 2630, "price_usd_min": 5,  "price_usd_max": 12, "has_wifi": False, "has_hot_shower": False, "day_on_trail": 5,  "notes": "Basic but warm. Good dal bhat and tongba millet beer."},
+            {"name": "Sama Guest House",    "location": "Samagaon",   "altitude_m": 3519, "price_usd_min": 6,  "price_usd_max": 15, "has_wifi": True,  "has_hot_shower": False, "day_on_trail": 6,  "notes": "Best lodge in Samagaon. Rooftop views of Manaslu at sunrise."},
+            {"name": "Snow Lion Lodge",     "location": "Samdo",      "altitude_m": 3860, "price_usd_min": 6,  "price_usd_max": 15, "has_wifi": False, "has_hot_shower": False, "day_on_trail": 8,  "notes": "Only a handful of lodges — reserve ahead if travelling with a group."},
+            {"name": "Dharamsala Shelter",  "location": "Dharamsala", "altitude_m": 4460, "price_usd_min": 5,  "price_usd_max": 10, "has_wifi": False, "has_hot_shower": False, "day_on_trail": 9,  "notes": "Very basic stone huts. Blankets provided but a good sleeping bag is essential."},
+            {"name": "Himalayan Lodge",     "location": "Bimthang",   "altitude_m": 3720, "price_usd_min": 6,  "price_usd_max": 15, "has_wifi": False, "has_hot_shower": False, "day_on_trail": 10, "notes": "Welcome sight after the pass crossing. Dal bhat and hot tea."},
+        ],
+    },
+
+    # ── Upper Mustang ─────────────────────────────────────────────────────────
+    {
+        "name": "Upper Mustang Trek",
+        "slug": "upper-mustang",
+        "region": "Mustang",
+        "description": (
+            "Upper Mustang is Nepal's last forbidden kingdom — a restricted high-altitude "
+            "desert enclosed by the rain shadow of the Annapurna and Dhaulagiri ranges. "
+            "The landscape is lunar and strikingly un-Nepali: eroded red-ochre cliffs, "
+            "ancient cave dwellings, and whitewashed villages that look more Tibetan than "
+            "South Asian. The destination is Lo Manthang, the medieval walled capital of "
+            "the former Kingdom of Lo, whose 15th-century royal palace and monasteries are "
+            "among the best-preserved in the Tibetan cultural world. The permit fee is high, "
+            "the experience is extraordinary."
+        ),
+        "highlights": (
+            "Lo Manthang — medieval walled capital of the ancient Kingdom of Lo\n"
+            "Choser cave complex — Buddhist cave monasteries carved into cliffs\n"
+            "Kali Gandaki river valley — deepest gorge on Earth\n"
+            "Sky caves of Mustang — thousands of man-made cliff dwellings\n"
+            "Lo Gekar monastery — one of the oldest in Nepal (8th century)\n"
+            "Tibetan plateau landscape unique in Nepal"
+        ),
+        "distance_km": "120.00",
+        "elevation_gain_m": 2200,
+        "max_altitude_m": 3840,
+        "duration_days": 10,
+        "difficulty": "moderate",
+        "trek_style": "teahouse",
+        "start_point": "Jomsom",
+        "end_point": "Jomsom",
+        "best_seasons": "May–Oct",
+        "permits_required": True,
+        "guide_required": True,
+        "is_published": True,
+        "latitude": "29.180556",
+        "longitude": "83.958333",
+        "cover_image_url": "https://images.unsplash.com/photo-1622302822014-526dc5c02780?w=1200&q=80&auto=format&fit=crop",
+        "condition_status": "open",
+        "condition_notes": "Trail open May–Oct. Roads from Jomsom to Kagbeni now jeep-accessible — confirm trail vs road with operator.",
+        "condition_updated": "2026-05-01",
+        "itinerary": [
+            {"day": 1,  "title": "Pokhara → Jomsom (fly) → Kagbeni",   "description": "Morning flight to Jomsom (2,720 m), then walk north along the Kali Gandaki to Kagbeni.", "altitude_m": 2810, "walk_hours": 2.5},
+            {"day": 2,  "title": "Kagbeni → Chele",                     "description": "Enter the Upper Mustang restricted area. Trail climbs through red-rock canyons.",         "altitude_m": 3050, "walk_hours": 5.0},
+            {"day": 3,  "title": "Chele → Syangboche",                  "description": "Cross two passes — Taklam La and Dajori La — with sweeping plateau views.",              "altitude_m": 3800, "walk_hours": 6.0},
+            {"day": 4,  "title": "Syangboche → Ghemi",                  "description": "Pass the longest mani wall in Nepal and descend to the whitewashed village of Ghemi.",   "altitude_m": 3520, "walk_hours": 5.5},
+            {"day": 5,  "title": "Ghemi → Tsarang",                     "description": "Climb to Nyi La pass (4,010 m) with Nilgiri, Tilicho, and Damodar views. Tsarang monastery.", "altitude_m": 3620, "walk_hours": 5.0},
+            {"day": 6,  "title": "Tsarang → Lo Manthang",               "description": "Arrive at the ancient walled capital of Lo. Enter through the main gate.",              "altitude_m": 3840, "walk_hours": 4.5},
+            {"day": 7,  "title": "Lo Manthang — Explore",               "description": "Full day: royal palace, Jampa Lhakhang (15th-century), Choser caves side-trip.",         "altitude_m": 3840, "walk_hours": 3.0},
+            {"day": 8,  "title": "Lo Manthang → Ghami",                 "description": "Begin the return south, detouring via Lo Gekar monastery (8th century).",                "altitude_m": 3520, "walk_hours": 5.5},
+            {"day": 9,  "title": "Ghami → Chele → Kagbeni",             "description": "Long but straightforward descent back to Kagbeni on the Kali Gandaki.",                 "altitude_m": 2810, "walk_hours": 7.0},
+            {"day": 10, "title": "Kagbeni → Jomsom → Pokhara (fly)",    "description": "Walk back to Jomsom and take the morning flight to Pokhara.",                            "altitude_m": 820,  "walk_hours": 2.0},
+        ],
+        "permits": [
+            {
+                "name": "Upper Mustang Restricted Area Permit",
+                "permit_type": "restricted_area",
+                "cost_usd": 500.00,
+                "where_to_buy": "Department of Immigration, Kathmandu (Kalikasthan)",
+                "notes": "USD 500 for 10 days; USD 50 per additional day. Minimum 2 trekkers + licensed guide mandatory. Most expensive trekking permit in Nepal.",
+            },
+            {
+                "name": "Annapurna Conservation Area Permit (ACAP)",
+                "permit_type": "conservation",
+                "cost_usd": 30.00,
+                "where_to_buy": "Nepal Tourism Board, Kathmandu; or ACAP checkpost at Jomsom",
+                "notes": "Required in addition to the Restricted Area Permit.",
+            },
+            {
+                "name": "TIMS Card",
+                "permit_type": "tims",
+                "cost_usd": 20.00,
+                "where_to_buy": "Nepal Tourism Board office, Kathmandu (Pradarshani Marg)",
+                "notes": "Individual trekkers $20; guided trekkers $10.",
+            },
+        ],
+        "teahouses": [
+            {"name": "Red House Lodge",       "location": "Kagbeni",     "altitude_m": 2810, "price_usd_min": 8,  "price_usd_max": 20, "has_wifi": True,  "has_hot_shower": True,  "day_on_trail": 1,  "notes": "One of the best lodges in Kagbeni — good food and views of the gateway village."},
+            {"name": "Himalayan Guest House", "location": "Chele",       "altitude_m": 3050, "price_usd_min": 6,  "price_usd_max": 15, "has_wifi": False, "has_hot_shower": False, "day_on_trail": 2,  "notes": "Basic but adequate. Wind can be fierce — keep doors closed."},
+            {"name": "Mustang Holiday Inn",   "location": "Ghemi",       "altitude_m": 3520, "price_usd_min": 8,  "price_usd_max": 18, "has_wifi": False, "has_hot_shower": False, "day_on_trail": 4,  "notes": "Good Thakali food. Warm common room."},
+            {"name": "Lo Manthang Hotel",     "location": "Lo Manthang", "altitude_m": 3840, "price_usd_min": 10, "price_usd_max": 25, "has_wifi": True,  "has_hot_shower": True,  "day_on_trail": 6,  "notes": "Nicest lodge in the walled city. Try the yak meat curry."},
+        ],
+    },
+
+    # ── Poon Hill ─────────────────────────────────────────────────────────────
+    {
+        "name": "Ghorepani Poon Hill Trek",
+        "slug": "poon-hill",
+        "region": "Annapurna",
+        "description": (
+            "The Ghorepani Poon Hill Trek is Nepal's most popular short trek and the "
+            "perfect introduction to Himalayan trekking. It climbs through terraced rice "
+            "paddies and dense rhododendron forest — ablaze with pink and red blooms in "
+            "March and April — to the viewpoint of Poon Hill (3,210 m), where a pre-dawn "
+            "hike rewards you with a panorama of ten Himalayan peaks including Dhaulagiri "
+            "(8,167 m) and Annapurna South. Doable in 4–5 days, accessible from Pokhara, "
+            "and suitable for trekkers of all fitness levels."
+        ),
+        "highlights": (
+            "Poon Hill sunrise (3,210 m) — Dhaulagiri and Annapurna in one sweep\n"
+            "Rhododendron forests in full bloom (March–April)\n"
+            "Gurung and Magar village culture in Ghandruk\n"
+            "Terraced hillside landscapes above Pokhara\n"
+            "Tadapani — peaceful forest camp between ridges\n"
+            "Short enough for a long weekend from Kathmandu"
+        ),
+        "distance_km": "48.00",
+        "elevation_gain_m": 1600,
+        "max_altitude_m": 3210,
+        "duration_days": 5,
+        "difficulty": "easy",
+        "trek_style": "teahouse",
+        "start_point": "Nayapul",
+        "end_point": "Nayapul",
+        "best_seasons": "Oct–May",
+        "permits_required": True,
+        "guide_required": False,
+        "is_published": True,
+        "latitude": "28.400000",
+        "longitude": "83.716667",
+        "cover_image_url": "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=1200&q=80&auto=format&fit=crop",
+        "condition_status": "open",
+        "condition_notes": "Trail open year-round. Rhododendrons peak mid-March to mid-April. Avoid monsoon (Jun–Aug) for leeches and mud.",
+        "condition_updated": "2026-05-01",
+        "itinerary": [
+            {"day": 1, "title": "Pokhara → Nayapul → Tikhedhunga", "description": "1-hour drive from Pokhara to Nayapul, then walk up the Bhurungdi Khola valley.",             "altitude_m": 1540, "walk_hours": 3.5},
+            {"day": 2, "title": "Tikhedhunga → Ghorepani",          "description": "Steep stone-stepped climb through rhododendron and oak forest to the ridge at Ghorepani.", "altitude_m": 2860, "walk_hours": 5.5},
+            {"day": 3, "title": "Poon Hill sunrise → Tadapani",     "description": "Pre-dawn hike to Poon Hill for sunrise. Descend and continue through forest to Tadapani.",  "altitude_m": 2630, "walk_hours": 6.0},
+            {"day": 4, "title": "Tadapani → Ghandruk",              "description": "Descend through mossy forest to the large Gurung village of Ghandruk with Annapurna views.","altitude_m": 1940, "walk_hours": 4.0},
+            {"day": 5, "title": "Ghandruk → Nayapul → Pokhara",    "description": "Descend through terraced fields to Nayapul, then drive back to Pokhara.",                   "altitude_m": 820,  "walk_hours": 3.5},
+        ],
+        "permits": [
+            {
+                "name": "Annapurna Conservation Area Permit (ACAP)",
+                "permit_type": "conservation",
+                "cost_usd": 30.00,
+                "where_to_buy": "Nepal Tourism Board, Kathmandu; or ACAP office, Pokhara (Damside/Lakeside); or the checkpost at Nayapul",
+                "notes": "Valid for one entry into the Annapurna Conservation Area.",
+            },
+            {
+                "name": "TIMS Card",
+                "permit_type": "tims",
+                "cost_usd": 20.00,
+                "where_to_buy": "Nepal Tourism Board office, Kathmandu or Pokhara",
+                "notes": "Individual trekkers $20; guided trekkers $10.",
+            },
+        ],
+        "teahouses": [
+            {"name": "Hotel Forest Shade",   "location": "Tikhedhunga", "altitude_m": 1540, "price_usd_min": 5,  "price_usd_max": 12, "has_wifi": False, "has_hot_shower": True,  "day_on_trail": 1, "notes": "Comfortable first-night stop. Warm showers and good dal bhat."},
+            {"name": "Deurali Inn",          "location": "Ghorepani",   "altitude_m": 2860, "price_usd_min": 6,  "price_usd_max": 18, "has_wifi": True,  "has_hot_shower": True,  "day_on_trail": 2, "notes": "One of the most popular lodges. Book ahead Oct–Nov."},
+            {"name": "Rhododendron Lodge",   "location": "Tadapani",    "altitude_m": 2630, "price_usd_min": 5,  "price_usd_max": 15, "has_wifi": True,  "has_hot_shower": False, "day_on_trail": 3, "notes": "Quiet forest setting. Good apple pie."},
+            {"name": "Himalayan Lodge",      "location": "Ghandruk",    "altitude_m": 1940, "price_usd_min": 6,  "price_usd_max": 15, "has_wifi": True,  "has_hot_shower": True,  "day_on_trail": 4, "notes": "Gurung-run lodge with a terrace facing Annapurna South. Great views."},
+        ],
+    },
+
+    # ── Mardi Himal ───────────────────────────────────────────────────────────
+    {
+        "name": "Mardi Himal Trek",
+        "slug": "mardi-himal",
+        "region": "Annapurna",
+        "description": (
+            "The Mardi Himal Trek opened as an official trekking route in 2012 and "
+            "has quickly become one of Nepal's most talked-about short treks. The "
+            "trail climbs the eastern ridge of the Mardi Himal massif through layered "
+            "rhododendron forest to an open high-altitude ridge walk with staggeringly "
+            "close views of Mardi Himal, Machhapuchhre (Fishtail), and Annapurna South. "
+            "The route starts and ends at Pokhara, requires no technical gear, and "
+            "receives far fewer visitors than the classic Annapurna trails — making it "
+            "one of Nepal's best-value week-long treks."
+        ),
+        "highlights": (
+            "Machhapuchhre (Fishtail Peak) seen at arm's length from High Camp\n"
+            "Annapurna South and Hiunchuli filling the sky above the ridge\n"
+            "Mardi Himal Base Camp (4,500 m) with 270° Himalayan panorama\n"
+            "Dense rhododendron forest in the middle section\n"
+            "Australian Camp — sweeping evening views of the Annapurna range\n"
+            "Far fewer trekkers than other Annapurna routes"
+        ),
+        "distance_km": "52.00",
+        "elevation_gain_m": 2600,
+        "max_altitude_m": 4500,
+        "duration_days": 7,
+        "difficulty": "moderate",
+        "trek_style": "teahouse",
+        "start_point": "Kande",
+        "end_point": "Siding",
+        "best_seasons": "Oct–Nov, Mar–May",
+        "permits_required": True,
+        "guide_required": False,
+        "is_published": True,
+        "latitude": "28.478333",
+        "longitude": "84.038333",
+        "cover_image_url": "https://images.unsplash.com/photo-1625134673337-519d4d10b313?w=1200&q=80&auto=format&fit=crop",
+        "condition_status": "open",
+        "condition_notes": "Trail open. High Camp and Base Camp accessible. Some snow patches above 3,800 m — microspikes useful Oct–Nov.",
+        "condition_updated": "2026-04-28",
+        "itinerary": [
+            {"day": 1, "title": "Pokhara → Kande → Australian Camp",  "description": "Drive from Pokhara to Kande (1,770 m), then hike up through terraced fields to Australian Camp.", "altitude_m": 2060, "walk_hours": 3.0},
+            {"day": 2, "title": "Australian Camp → Forest Camp",       "description": "Enter thick rhododendron forest on a well-marked ridge trail.",                                     "altitude_m": 2600, "walk_hours": 4.0},
+            {"day": 3, "title": "Forest Camp → Low Camp",              "description": "Continue up the ridge. Forest begins to thin; first Annapurna views appear.",                        "altitude_m": 3050, "walk_hours": 4.5},
+            {"day": 4, "title": "Low Camp → High Camp",                "description": "Trail emerges from tree line. Machhapuchhre dominates. High Camp is on the open ridge.",            "altitude_m": 3580, "walk_hours": 4.5},
+            {"day": 5, "title": "High Camp → Mardi Himal Base Camp → High Camp", "description": "Early start up the ridge to Base Camp (4,500 m) for sunrise on the massif. Return to High Camp.", "altitude_m": 3580, "walk_hours": 5.5},
+            {"day": 6, "title": "High Camp → Siding Village",          "description": "Descend the east ridge through rhododendron to the quiet Gurung village of Siding.",                "altitude_m": 1750, "walk_hours": 6.0},
+            {"day": 7, "title": "Siding → Lumre → Pokhara",            "description": "Walk or jeep to Lumre on the Pokhara–Beni highway, then drive to Pokhara.",                        "altitude_m": 820,  "walk_hours": 2.0},
+        ],
+        "permits": [
+            {
+                "name": "Annapurna Conservation Area Permit (ACAP)",
+                "permit_type": "conservation",
+                "cost_usd": 30.00,
+                "where_to_buy": "Nepal Tourism Board or ACAP office, Pokhara (Lakeside / Damside)",
+                "notes": "Same permit covers all Annapurna Conservation Area treks including Poon Hill and Mardi Himal.",
+            },
+            {
+                "name": "TIMS Card",
+                "permit_type": "tims",
+                "cost_usd": 20.00,
+                "where_to_buy": "Nepal Tourism Board office, Pokhara",
+                "notes": "Individual trekkers $20; guided trekkers $10.",
+            },
+        ],
+        "teahouses": [
+            {"name": "Australian Camp Lodge",  "location": "Australian Camp", "altitude_m": 2060, "price_usd_min": 5,  "price_usd_max": 15, "has_wifi": True,  "has_hot_shower": True,  "day_on_trail": 1, "notes": "Best sunset views of the Annapurna range. Popular with day-trippers from Pokhara."},
+            {"name": "Forest Camp Lodge",      "location": "Forest Camp",     "altitude_m": 2600, "price_usd_min": 5,  "price_usd_max": 12, "has_wifi": False, "has_hot_shower": False, "day_on_trail": 2, "notes": "Simple lodge surrounded by rhododendrons. Peaceful and quiet."},
+            {"name": "Low Camp Teahouse",      "location": "Low Camp",        "altitude_m": 3050, "price_usd_min": 5,  "price_usd_max": 12, "has_wifi": False, "has_hot_shower": False, "day_on_trail": 3, "notes": "Good acclimatisation stop. Cook here charges by item — budget accordingly."},
+            {"name": "High Camp Lodge",        "location": "High Camp",       "altitude_m": 3580, "price_usd_min": 6,  "price_usd_max": 15, "has_wifi": False, "has_hot_shower": False, "day_on_trail": 4, "notes": "Exposed ridge location — wind can be strong. Best Machhapuchhre sunrise in Nepal."},
+        ],
+    },
+
     # ── Gokyo Lakes ───────────────────────────────────────────────────────────
     {
         "name": "Gokyo Lakes Trek",

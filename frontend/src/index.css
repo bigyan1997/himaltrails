@@ -112,6 +112,14 @@ body {
   100% { background-position: calc(100% + 600px) 0; }
 }
 
+.skeleton-shimmer {
+  background-color: #E8E5E0;
+  background-image: linear-gradient(90deg, #E8E5E0 0%, #F5F3EF 40%, #FAFAFA 50%, #F5F3EF 60%, #E8E5E0 100%);
+  background-size: 800px 100%;
+  background-repeat: no-repeat;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
 /* ── Smooth links & buttons ──────────────────────────── */
 a,
 button {
