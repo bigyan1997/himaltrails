@@ -4,9 +4,10 @@ export function Skeleton({ width = '100%', height = '16px', radius = '8px', styl
       width, height,
       borderRadius: radius,
       backgroundColor: '#E8E5E0',
-      backgroundImage: 'linear-gradient(90deg, #E8E5E0 0%, #F0EDE8 40%, #E8E5E0 80%)',
-      backgroundSize: '400px 100%',
-      animation: 'shimmer 1.4s ease-in-out infinite',
+      backgroundImage: 'linear-gradient(90deg, #E8E5E0 0%, #F5F3EF 45%, #FFFFFF 55%, #E8E5E0 100%)',
+      backgroundSize: '600px 100%',
+      backgroundRepeat: 'no-repeat',
+      animation: 'shimmer 1.6s linear infinite',
       ...style,
     }} />
   )

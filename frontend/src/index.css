@@ -108,8 +108,8 @@ body {
 
 /* ── Skeleton shimmer ────────────────────────────────── */
 @keyframes shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
+  0%   { background-position: -600px 0; }
+  100% { background-position: calc(100% + 600px) 0; }
 }
 
 /* ── Smooth links & buttons ──────────────────────────── */
