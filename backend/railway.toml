@@ -4,5 +4,5 @@ builder = "NIXPACKS"
 [deploy]
 startCommand = "python manage.py migrate --run-syncdb && python manage.py collectstatic --noinput && python manage.py seed_trails && gunicorn himaltrails.wsgi --bind 0.0.0.0:$PORT --workers 2 --timeout 60"
 healthcheckPath = "/api/trails/"
-healthcheckTimeout = 30
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
