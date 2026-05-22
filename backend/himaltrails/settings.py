@@ -31,11 +31,19 @@ INSTALLED_APPS = [
 
     # Third-party
     'rest_framework',
+    'rest_framework.authtoken',
     'corsheaders',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
 
     # Local apps
     'trails',
     'users',
+    'planner',
 ]
 
 # ─── Middleware ───────────────────────────────────────────────────────────────
@@ -50,6 +58,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'himaltrails.urls'
@@ -121,11 +130,56 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 }
 
+# ─── JWT ──────────────────────────────────────────────────────────────────────
+
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME':  timedelta(hours=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+    'ROTATE_REFRESH_TOKENS':  True,
+}
+
+# ─── dj-rest-auth ─────────────────────────────────────────────────────────────
+
+REST_AUTH = {
+    'USE_JWT':                    True,
+    'JWT_AUTH_HTTPONLY':          False,
+    'REGISTER_SERIALIZER':        'users.serializers.RegisterSerializer',
+    'USER_DETAILS_SERIALIZER':    'users.serializers.UserSerializer',
+}
+
+# ─── django-allauth ───────────────────────────────────────────────────────────
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+ACCOUNT_LOGIN_METHODS             = {'email'}
+ACCOUNT_SIGNUP_FIELDS             = ['email*', 'password1*', 'password2*']
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_EMAIL_VERIFICATION        = 'none'
+SITE_ID                           = 1
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+    }
+}
+
 # ─── Custom User Model ────────────────────────────────────────────────────────
-# Tells Django to use our email-based user instead of the default username one
 
 AUTH_USER_MODEL = 'users.User'
+
+# ─── Email (console for development) ─────────────────────────────────────────
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# ─── Google OAuth ─────────────────────────────────────────────────────────────
+
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getTrails } from '../services/api'
+import Navbar from '../components/Navbar'
+import useMobile from '../hooks/useMobile'
 
 const DIFFICULTY_BADGE = {
   easy:     { bg: '#E8F5E9', color: '#2E7D32' },
@@ -13,6 +15,7 @@ export default function TrailList() {
   const [trails, setTrails]   = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter]   = useState('all')
+  const isMobile              = useMobile()
 
   useEffect(() => {
     getTrails()
@@ -26,35 +29,22 @@ export default function TrailList() {
   return (
     <div style={{ backgroundColor: '#F7F5F0', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif' }}>
 
-      {/* ── Navbar ──────────────────────────────────────── */}
-      <nav style={{
-        backgroundColor: '#1A3A2A',
-        padding: '16px 48px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-      }}>
-        <Link to="/" style={{ fontFamily: 'Playfair Display, serif', fontSize: '22px', fontWeight: 700, color: '#C4973A', textDecoration: 'none' }}>
-          HimalTrails
-        </Link>
+      <Navbar>
         <Link to="/trails" style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>
           Trails
         </Link>
-      </nav>
+      </Navbar>
 
       {/* ── Hero ────────────────────────────────────────── */}
       <div style={{
         background: 'linear-gradient(135deg, #0D2B1D 0%, #1A3A2A 50%, #2D5A3D 100%)',
-        padding: '80px 48px 64px',
+        padding: isMobile ? '72px 20px 40px' : '80px 48px 64px',
       }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <p style={{ fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#C4973A', marginBottom: '16px' }}>
             ✦ Verified Routes
           </p>
-          <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: '64px', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.05, marginBottom: '20px' }}>
+          <h1 style={{ fontFamily: 'Fraunces, serif', fontSize: isMobile ? '40px' : '64px', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.05, marginBottom: '20px' }}>
             Nepal Trails
           </h1>
           <p style={{ fontSize: '17px', fontWeight: 300, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, maxWidth: '520px', marginBottom: '48px' }}>
@@ -62,17 +52,21 @@ export default function TrailList() {
           </p>
 
           {/* Stats */}
-          <div style={{ display: 'flex', gap: '48px' }}>
+          <div style={{
+            display: isMobile ? 'grid' : 'flex',
+            gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : undefined,
+            gap: isMobile ? '12px' : '48px',
+          }}>
             {[
               { value: trails.length || '—', label: 'Verified Trails' },
               { value: '18',                  label: 'Regions' },
               { value: '8,849m',              label: 'Highest Peak' },
             ].map(s => (
               <div key={s.label}>
-                <p style={{ fontFamily: 'Playfair Display, serif', fontSize: '36px', fontWeight: 700, color: '#C4973A', lineHeight: 1 }}>
+                <p style={{ fontFamily: 'Fraunces, serif', fontSize: isMobile ? '26px' : '36px', fontWeight: 700, color: '#C4973A', lineHeight: 1 }}>
                   {s.value}
                 </p>
-                <p style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.45)', marginTop: '6px' }}>
+                <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.45)', marginTop: '6px' }}>
                   {s.label}
                 </p>
               </div>
@@ -83,36 +77,71 @@ export default function TrailList() {
 
       {/* ── Filters ─────────────────────────────────────── */}
       <div style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E8E5E0' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '14px 48px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '13px', color: '#999', marginRight: '4px' }}>Filter:</span>
-          {difficulties.map(d => (
-            <button
-              key={d}
-              onClick={() => setFilter(d)}
-              style={{
-                padding: '6px 18px',
-                borderRadius: '20px',
-                fontSize: '13px',
-                textTransform: 'capitalize',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'DM Sans, sans-serif',
-                backgroundColor: filter === d ? '#1A3A2A' : '#F0EDE8',
-                color: filter === d ? '#FFFFFF' : '#555',
-                transition: 'all 0.2s',
-              }}
-            >
-              {d}
-            </button>
-          ))}
-          <span style={{ marginLeft: 'auto', fontSize: '13px', color: '#BBB' }}>
-            {filtered.length} trail{filtered.length !== 1 ? 's' : ''}
-          </span>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: isMobile ? '12px 0' : '14px 48px' }}>
+          {isMobile ? (
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 20px', width: 'max-content' }}>
+                <span style={{ fontSize: '13px', color: '#999', marginRight: '4px', flexShrink: 0 }}>Filter:</span>
+                {difficulties.map(d => (
+                  <button
+                    key={d}
+                    onClick={() => setFilter(d)}
+                    style={{
+                      padding: '6px 18px',
+                      borderRadius: '20px',
+                      fontSize: '13px',
+                      textTransform: 'capitalize',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontFamily: 'DM Sans, sans-serif',
+                      backgroundColor: filter === d ? '#1A3A2A' : '#F0EDE8',
+                      color: filter === d ? '#FFFFFF' : '#555',
+                      transition: 'all 0.2s',
+                      flexShrink: 0,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {d}
+                  </button>
+                ))}
+                <span style={{ fontSize: '13px', color: '#BBB', paddingLeft: '8px', flexShrink: 0 }}>
+                  {filtered.length} trail{filtered.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '13px', color: '#999', marginRight: '4px' }}>Filter:</span>
+              {difficulties.map(d => (
+                <button
+                  key={d}
+                  onClick={() => setFilter(d)}
+                  style={{
+                    padding: '6px 18px',
+                    borderRadius: '20px',
+                    fontSize: '13px',
+                    textTransform: 'capitalize',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'DM Sans, sans-serif',
+                    backgroundColor: filter === d ? '#1A3A2A' : '#F0EDE8',
+                    color: filter === d ? '#FFFFFF' : '#555',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {d}
+                </button>
+              ))}
+              <span style={{ marginLeft: 'auto', fontSize: '13px', color: '#BBB' }}>
+                {filtered.length} trail{filtered.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* ── Cards ───────────────────────────────────────── */}
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '48px 48px' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: isMobile ? '24px 20px' : '48px 48px' }}>
         {loading ? (
           <p style={{ color: '#AAA', textAlign: 'center', padding: '80px 0' }}>Loading trails...</p>
         ) : (
@@ -141,8 +170,8 @@ export default function TrailList() {
                     e.currentTarget.style.boxShadow = 'none'
                   }}
                 >
-                  <div style={{ padding: '36px 40px' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '32px' }}>
+                  <div style={{ padding: isMobile ? '20px' : '36px 40px' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px', flexDirection: isMobile ? 'column' : undefined }}>
 
                       {/* ── Left ── */}
                       <div style={{ flex: 1 }}>
@@ -157,7 +186,7 @@ export default function TrailList() {
                         </div>
 
                         {/* Name */}
-                        <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '32px', fontWeight: 700, color: '#1A3A2A', lineHeight: 1.2, marginBottom: '10px' }}>
+                        <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: '32px', fontWeight: 700, color: '#1A3A2A', lineHeight: 1.2, marginBottom: '10px' }}>
                           {trail.name}
                         </h2>
 
@@ -166,34 +195,27 @@ export default function TrailList() {
                           Best seasons: <span style={{ color: '#555' }}>{trail.best_seasons}</span>
                         </p>
 
-                        {/* Stat pills */}
-                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        {/* Stat grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, auto)', gap: '0', columnGap: '32px' }}>
                           {[
-                            { icon: '🗓', text: `${trail.duration_days} days` },
-                            { icon: '⛰', text: `${trail.max_altitude_m.toLocaleString()}m max altitude` },
-                            { icon: '🧭', text: trail.trek_style === 'teahouse' ? 'Tea House Trek' : trail.trek_style },
+                            { val: trail.duration_days, label: 'Days' },
+                            { val: `${trail.max_altitude_m.toLocaleString()}m`, label: 'Max Alt' },
+                            { val: trail.trek_style === 'teahouse' ? 'Teahouse' : trail.trek_style, label: 'Style' },
                           ].map(s => (
-                            <span
-                              key={s.text}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                fontSize: '13px',
-                                padding: '7px 16px',
-                                borderRadius: '20px',
-                                backgroundColor: '#F7F5F0',
-                                color: '#444',
-                              }}
-                            >
-                              {s.icon} {s.text}
-                            </span>
+                            <div key={s.label}>
+                              <p style={{ fontFamily: 'Fraunces, serif', fontSize: '16px', fontWeight: 700, color: '#1A3A2A', lineHeight: 1, textTransform: 'capitalize' }}>
+                                {s.val}
+                              </p>
+                              <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#BBB', marginTop: '4px' }}>
+                                {s.label}
+                              </p>
+                            </div>
                           ))}
                         </div>
                       </div>
 
                       {/* ── Right — stat block ── */}
-                      <div style={{
+                      {!isMobile && <div style={{
                         backgroundColor: '#1A3A2A',
                         borderRadius: '16px',
                         padding: '28px 32px',
@@ -201,7 +223,7 @@ export default function TrailList() {
                         minWidth: '130px',
                         flexShrink: 0,
                       }}>
-                        <p style={{ fontFamily: 'Playfair Display, serif', fontSize: '48px', fontWeight: 700, color: '#C4973A', lineHeight: 1 }}>
+                        <p style={{ fontFamily: 'Fraunces, serif', fontSize: '48px', fontWeight: 700, color: '#C4973A', lineHeight: 1 }}>
                           {trail.duration_days}
                         </p>
                         <p style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.45)', marginTop: '4px', marginBottom: '16px' }}>
@@ -215,7 +237,7 @@ export default function TrailList() {
                             max altitude
                           </p>
                         </div>
-                      </div>
+                      </div>}
 
                     </div>
 

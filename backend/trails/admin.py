@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Trail, Itinerary
+from .models import Trail, Itinerary, Permit, Teahouse
 
 
 class ItineraryInline(admin.TabularInline):
@@ -22,3 +22,17 @@ class TrailAdmin(admin.ModelAdmin):
 class ItineraryAdmin(admin.ModelAdmin):
     list_display = ['trail', 'day', 'title', 'altitude_m', 'walk_hours']
     ordering     = ['trail', 'day']
+
+
+@admin.register(Permit)
+class PermitAdmin(admin.ModelAdmin):
+    list_display  = ['name', 'trail', 'permit_type', 'cost_usd']
+    list_filter   = ['trail', 'permit_type']
+    search_fields = ['name', 'trail__name']
+
+
+@admin.register(Teahouse)
+class TeahouseAdmin(admin.ModelAdmin):
+    list_display  = ['name', 'location', 'trail', 'altitude_m', 'price_usd_min', 'price_usd_max', 'has_wifi', 'has_hot_shower']
+    list_filter   = ['trail', 'has_wifi', 'has_hot_shower']
+    search_fields = ['name', 'location']

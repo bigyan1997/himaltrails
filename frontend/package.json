@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "@fontsource/dm-sans": "^5.2.8",
+    "@fontsource/fraunces": "^5.2.9",
     "@fontsource/playfair-display": "^5.2.8",
+    "@react-oauth/google": "^0.13.5",
     "axios": "^1.16.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",

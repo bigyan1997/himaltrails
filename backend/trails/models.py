@@ -67,3 +67,47 @@ class Itinerary(models.Model):
 
     def __str__(self):
         return f"Day {self.day} — {self.title}"
+
+
+class Permit(models.Model):
+
+    PERMIT_TYPE_CHOICES = [
+        ('tims',          'TIMS Card'),
+        ('national_park', 'National Park Entry'),
+        ('conservation',  'Conservation Area Permit'),
+        ('restricted',    'Restricted Area Permit'),
+        ('municipal',     'Municipality / Local Entry'),
+    ]
+
+    trail        = models.ForeignKey(Trail, on_delete=models.CASCADE, related_name='permits')
+    name         = models.CharField(max_length=200)
+    permit_type  = models.CharField(max_length=30, choices=PERMIT_TYPE_CHOICES)
+    cost_usd     = models.DecimalField(max_digits=8, decimal_places=2)
+    where_to_buy = models.CharField(max_length=400)
+    notes        = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['cost_usd']
+
+    def __str__(self):
+        return f"{self.name} — {self.trail.name}"
+
+
+class Teahouse(models.Model):
+
+    trail          = models.ForeignKey(Trail, on_delete=models.CASCADE, related_name='teahouses')
+    name           = models.CharField(max_length=200)
+    location       = models.CharField(max_length=200)
+    altitude_m     = models.IntegerField(null=True, blank=True)
+    price_usd_min  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    price_usd_max  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    has_wifi       = models.BooleanField(default=False)
+    has_hot_shower = models.BooleanField(default=False)
+    day_on_trail   = models.IntegerField(null=True, blank=True)
+    notes          = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['altitude_m']
+
+    def __str__(self):
+        return f"{self.name} — {self.location}"
