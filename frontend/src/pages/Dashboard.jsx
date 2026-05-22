@@ -124,7 +124,7 @@ export default function Dashboard() {
           <div style={{ display: 'flex', gap: '32px', alignItems: 'flex-start', flexDirection: isMobile ? 'column' : undefined }}>
 
             {/* Trail cards */}
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, width: isMobile ? '100%' : undefined }}>
               {savedTrails.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '80px 24px', backgroundColor: '#FFFFFF', borderRadius: '20px', border: '1px solid #E8E5E0' }}>
                   <p style={{ fontSize: '32px', marginBottom: '12px' }}>🏔️</p>

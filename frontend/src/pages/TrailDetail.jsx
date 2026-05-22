@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { getTrail, getSavedTrails, saveTrail, unsaveTrail } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
@@ -69,6 +69,7 @@ export default function TrailDetail() {
   const [savePending, setSavePending] = useState(false)
   const [hoveredDot, setHoveredDot]   = useState(null)
   const isMobile                      = useMobile()
+  const scrolling                     = useRef(false)
 
   useEffect(() => {
     getTrail(slug)
@@ -102,7 +103,7 @@ export default function TrailDetail() {
       const el = document.getElementById(id)
       if (!el) return
       const obs = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActive(id) },
+        ([entry]) => { if (entry.isIntersecting && !scrolling.current) setActive(id) },
         { rootMargin: '-15% 0px -75% 0px' },
       )
       obs.observe(el)
@@ -112,10 +113,28 @@ export default function TrailDetail() {
   }, [trail])
 
   const scrollTo = id => {
+    setActive(id)
     const el = document.getElementById(id)
     if (!el) return
-    const y = el.getBoundingClientRect().top + window.scrollY - NAVBAR_H - SECNAV_H - 24
-    window.scrollTo({ top: y, behavior: 'smooth' })
+    const target = el.getBoundingClientRect().top + window.scrollY - NAVBAR_H - SECNAV_H - 24
+    const start  = window.scrollY
+    const dist   = target - start
+    const dur    = 900
+    const t0     = performance.now()
+    const ease   = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2
+    scrolling.current = true
+    document.documentElement.style.scrollBehavior = 'auto'
+    const step = now => {
+      const p = Math.min((now - t0) / dur, 1)
+      window.scrollTo(0, start + dist * ease(p))
+      if (p < 1) {
+        requestAnimationFrame(step)
+      } else {
+        document.documentElement.style.scrollBehavior = ''
+        scrolling.current = false
+      }
+    }
+    requestAnimationFrame(step)
   }
 
   const elev = useMemo(() => trail ? buildElevPath(trail.itinerary) : null, [trail])
@@ -533,7 +552,7 @@ export default function TrailDetail() {
         {/* ── PERMITS ───────────────────────────────────────── */}
         <section id="permits" style={{ padding: '72px 0' }}>
           <p style={{ fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C4973A', marginBottom: '12px' }}>✦ What you need to know</p>
-          <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: '40px', fontWeight: 700, color: '#1A3A2A', marginBottom: '48px' }}>
+          <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: isMobile ? '28px' : '40px', fontWeight: 700, color: '#1A3A2A', marginBottom: isMobile ? '28px' : '48px' }}>
             Permits & Logistics
           </h2>
 
@@ -543,8 +562,9 @@ export default function TrailDetail() {
               {trail.permits.map(p => (
                 <div key={p.id} style={{
                   backgroundColor: '#FFFFFF', border: '1px solid #E8E5E0',
-                  borderRadius: '20px', padding: '28px 32px',
-                  display: 'flex', gap: '32px', alignItems: 'flex-start',
+                  borderRadius: '20px', padding: isMobile ? '20px' : '28px 32px',
+                  display: 'flex', flexDirection: isMobile ? 'column' : 'row',
+                  gap: isMobile ? '12px' : '32px', alignItems: 'flex-start',
                 }}>
                   <div style={{ flexShrink: 0 }}>
                     <span style={{
