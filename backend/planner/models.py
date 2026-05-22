@@ -48,3 +48,49 @@ class PackingItem(models.Model):
 
     def __str__(self):
         return f'{self.user.email}: {self.name}'
+
+
+class Review(models.Model):
+    user       = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews')
+    trail      = models.ForeignKey('trails.Trail', on_delete=models.CASCADE, related_name='reviews')
+    rating     = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
+    body       = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['user', 'trail']
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.user.email} rated {self.trail.name} {self.rating}★'
+
+
+class CompletedTrail(models.Model):
+    user         = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='completed_trails')
+    trail        = models.ForeignKey('trails.Trail', on_delete=models.CASCADE, related_name='completed_by')
+    completed_at = models.DateField()
+    notes        = models.TextField(blank=True)
+    created_at   = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['user', 'trail']
+        ordering = ['-completed_at']
+
+    def __str__(self):
+        return f'{self.user.email} completed {self.trail.name}'
+
+
+class TripPlan(models.Model):
+    user       = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='trip_plans')
+    trail      = models.ForeignKey('trails.Trail', on_delete=models.CASCADE, related_name='trip_plans')
+    start_date = models.DateField()
+    notes      = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['user', 'trail']
+        ordering = ['start_date']
+
+    def __str__(self):
+        return f'{self.user.email} plans {self.trail.name} from {self.start_date}'

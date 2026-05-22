@@ -1,11 +1,12 @@
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
-import Home       from "./pages/Home";
-import TrailList  from "./pages/TrailList";
+import Home        from "./pages/Home";
+import TrailList   from "./pages/TrailList";
 import TrailDetail from "./pages/TrailDetail";
-import Login      from "./pages/Login";
-import Register   from "./pages/Register";
-import Dashboard  from "./pages/Dashboard";
+import Login       from "./pages/Login";
+import Register    from "./pages/Register";
+import Dashboard   from "./pages/Dashboard";
+import MapView     from "./pages/MapView";
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/"              element={<Home />} />
         <Route path="/trails"        element={<TrailList />} />
         <Route path="/trails/:slug"  element={<TrailDetail />} />
+        <Route path="/map"           element={<MapView />} />
         <Route path="/login"         element={<Login />} />
         <Route path="/register"      element={<Register />} />
         <Route path="/dashboard"     element={<Dashboard />} />

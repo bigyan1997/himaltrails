@@ -40,6 +40,10 @@ class Trail(models.Model):
     permits_required = models.BooleanField(default=True)
     guide_required   = models.BooleanField(default=False)
 
+    # ─── Coordinates (for map + weather) ─────────────────────────
+    latitude     = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude    = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+
     # ─── Meta ────────────────────────────────────────────────────
     is_published = models.BooleanField(default=False)
     created_at   = models.DateTimeField(auto_now_add=True)

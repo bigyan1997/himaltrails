@@ -1,6 +1,11 @@
-import { useEffect, useState, useMemo, useRef } from 'react'
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { getTrail, getSavedTrails, saveTrail, unsaveTrail } from '../services/api'
+import {
+  getTrail, getSavedTrails, saveTrail, unsaveTrail,
+  getReviews, submitReview, deleteReview,
+  getCompletedTrails, markCompleted, unmarkCompleted,
+  getTrails,
+} from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 import Navbar from '../components/Navbar'
 import useMobile from '../hooks/useMobile'
@@ -10,6 +15,7 @@ const SECTIONS = [
   { id: 'itinerary',  label: 'Itinerary' },
   { id: 'permits',    label: 'Permits' },
   { id: 'teahouses',  label: 'Teahouses' },
+  { id: 'reviews',    label: 'Reviews' },
 ]
 
 const PERMIT_TYPE_LABEL = {
@@ -67,9 +73,22 @@ export default function TrailDetail() {
   const [active, setActive]       = useState('overview')
   const [saved, setSaved]         = useState(false)
   const [savePending, setSavePending] = useState(false)
-  const [hoveredDot, setHoveredDot]   = useState(null)
-  const isMobile                      = useMobile()
-  const scrolling                     = useRef(false)
+  const [hoveredDot, setHoveredDot]     = useState(null)
+  const [weather, setWeather]           = useState(null)
+  const [reviews, setReviews]           = useState([])
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewBody, setReviewBody]     = useState('')
+  const [reviewSaving, setReviewSaving] = useState(false)
+  const [completed, setCompleted]       = useState(false)
+  const [completedPending, setCompletedPending] = useState(false)
+  const [allTrails, setAllTrails]       = useState([])
+  const [groupSize, setGroupSize]       = useState(1)
+  const [currency, setCurrency]         = useState('USD')
+  const isMobile                        = useMobile()
+  const scrolling                       = useRef(false)
+
+  const FX = { USD: 1, NPR: 134.5, EUR: 0.92, GBP: 0.79 }
+  const FX_SYM = { USD: '$', NPR: '₨', EUR: '€', GBP: '£' }
 
   useEffect(() => {
     getTrail(slug)
@@ -80,10 +99,28 @@ export default function TrailDetail() {
 
   useEffect(() => {
     if (!user) return
-    getSavedTrails().then(res => {
-      setSaved(res.data.some(s => s.trail.slug === slug))
-    })
+    getSavedTrails().then(res => setSaved(res.data.some(s => s.trail.slug === slug)))
+    getCompletedTrails().then(res => setCompleted(res.data.some(c => c.trail.slug === slug)))
   }, [user, slug])
+
+  useEffect(() => {
+    getReviews(slug).then(res => setReviews(res.data)).catch(() => {})
+  }, [slug])
+
+  useEffect(() => {
+    getTrails().then(res => setAllTrails(res.data)).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (!trail?.latitude || !trail?.longitude) return
+    fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${trail.latitude}&longitude=${trail.longitude}` +
+      `&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=Asia%2FKathmandu&forecast_days=5`
+    )
+      .then(r => r.json())
+      .then(d => setWeather(d.daily))
+      .catch(() => {})
+  }, [trail])
 
   const handleSave = async () => {
     if (!user) { navigate('/login', { state: { from: `/trails/${slug}` } }); return }
@@ -94,6 +131,50 @@ export default function TrailDetail() {
     } finally {
       setSavePending(false)
     }
+  }
+
+  const handleCompleted = async () => {
+    if (!user) { navigate('/login', { state: { from: `/trails/${slug}` } }); return }
+    setCompletedPending(true)
+    try {
+      if (completed) {
+        await unmarkCompleted(slug)
+        setCompleted(false)
+      } else {
+        await markCompleted({ trail_slug: slug, completed_at: new Date().toISOString().slice(0, 10) })
+        setCompleted(true)
+      }
+    } finally {
+      setCompletedPending(false)
+    }
+  }
+
+  const handleReviewSubmit = useCallback(async (e) => {
+    e.preventDefault()
+    if (!user) { navigate('/login', { state: { from: `/trails/${slug}` } }); return }
+    setReviewSaving(true)
+    try {
+      await submitReview(slug, { rating: reviewRating, body: reviewBody })
+      const res = await getReviews(slug)
+      setReviews(res.data)
+      setReviewBody('')
+    } finally {
+      setReviewSaving(false)
+    }
+  }, [user, slug, reviewRating, reviewBody, navigate])
+
+  const handleReviewDelete = async (id) => {
+    await deleteReview(slug, id)
+    setReviews(r => r.filter(x => x.id !== id))
+  }
+
+  const weatherIcon = code => {
+    if (code === 0) return '☀️'
+    if (code <= 3)  return '⛅'
+    if (code <= 48) return '🌫️'
+    if (code <= 67) return '🌧️'
+    if (code <= 77) return '❄️'
+    return '⛈️'
   }
 
   useEffect(() => {
@@ -266,6 +347,21 @@ export default function TrailDetail() {
                   <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
                 </svg>
                 {saved ? 'Saved' : 'Save trail'}
+              </button>
+              <button
+                onClick={handleCompleted}
+                disabled={completedPending}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  padding: '12px 22px', borderRadius: '24px', border: 'none',
+                  cursor: completedPending ? 'not-allowed' : 'pointer',
+                  backgroundColor: completed ? 'rgba(46,125,50,0.7)' : 'rgba(255,255,255,0.08)',
+                  color: '#FFFFFF', fontSize: '13px', fontWeight: 500,
+                  fontFamily: 'DM Sans, sans-serif', backdropFilter: 'blur(8px)',
+                  transition: 'background-color 0.2s',
+                }}
+              >
+                {completed ? '✓ Completed' : '🏔 Mark completed'}
               </button>
               <Link
                 to="/dashboard"
@@ -469,6 +565,32 @@ export default function TrailDetail() {
               </div>
             </div>
           )}
+
+          {/* ── Weather widget ── */}
+          {weather && (
+            <div style={{ marginTop: '32px', backgroundColor: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: '20px', padding: isMobile ? '20px' : '28px 32px' }}>
+              <p style={{ fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#C0BAB2', marginBottom: '16px' }}>
+                Current Forecast · {trail.start_point}
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${weather.time.length}, 1fr)`, gap: '8px' }}>
+                {weather.time.map((date, i) => {
+                  const d = new Date(date)
+                  const day = d.toLocaleDateString('en-US', { weekday: 'short' })
+                  return (
+                    <div key={date} style={{ textAlign: 'center', padding: '12px 4px', borderRadius: '12px', backgroundColor: i === 0 ? '#F7F5F0' : 'transparent' }}>
+                      <p style={{ fontSize: '11px', color: '#999', marginBottom: '6px' }}>{i === 0 ? 'Today' : day}</p>
+                      <p style={{ fontSize: '22px', marginBottom: '6px' }}>{weatherIcon(weather.weathercode[i])}</p>
+                      <p style={{ fontSize: '13px', fontWeight: 700, color: '#1A3A2A' }}>{Math.round(weather.temperature_2m_max[i])}°</p>
+                      <p style={{ fontSize: '11px', color: '#BBB' }}>{Math.round(weather.temperature_2m_min[i])}°</p>
+                    </div>
+                  )
+                })}
+              </div>
+              <p style={{ fontSize: '11px', color: '#DDD', marginTop: '12px' }}>
+                Temperature in °C · Source: Open-Meteo
+              </p>
+            </div>
+          )}
         </section>
 
         <div style={{ borderTop: '1px solid #E8E5E0' }} />
@@ -487,9 +609,12 @@ export default function TrailDetail() {
               background: 'linear-gradient(to bottom, rgba(196,151,58,0.15) 0%, #C4973A 35%, #C4973A 65%, rgba(196,151,58,0.15) 100%)',
             }} />
 
-            {trail.itinerary.map((day) => {
-              const frac   = maxAlt > 0 ? day.altitude_m / maxAlt : 0
-              const isHigh = frac > 0.85
+            {trail.itinerary.map((day, dayIdx) => {
+              const frac        = maxAlt > 0 ? day.altitude_m / maxAlt : 0
+              const isHigh      = frac > 0.85
+              const prevAlt     = dayIdx > 0 ? trail.itinerary[dayIdx - 1].altitude_m : 0
+              const gainM       = day.altitude_m - prevAlt
+              const acclimWarn  = gainM > 500 && day.altitude_m > 3000
               return (
                 <div key={day.day} style={{ paddingLeft: '40px', paddingBottom: '44px', position: 'relative' }}>
                   {/* Timeline dot — larger + glowing at high points */}
@@ -513,6 +638,11 @@ export default function TrailDetail() {
                         {day.walk_hours > 0 && (
                           <span style={{ fontSize: '12px', color: '#AAA', backgroundColor: '#F0EDE8', padding: '2px 10px', borderRadius: '20px' }}>
                             🕐 {day.walk_hours} hrs
+                          </span>
+                        )}
+                        {acclimWarn && (
+                          <span style={{ fontSize: '11px', color: '#BF360C', backgroundColor: '#FBE9E7', padding: '2px 10px', borderRadius: '20px', fontWeight: 600 }}>
+                            ⚠ +{gainM}m gain — acclimatise carefully
                           </span>
                         )}
                       </div>
@@ -596,6 +726,53 @@ export default function TrailDetail() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* ── Permit cost calculator + currency converter ── */}
+          {trail.permits.length > 0 && (
+            <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: '20px', padding: isMobile ? '20px' : '28px 32px', marginBottom: '32px' }}>
+              <h3 style={{ fontFamily: 'Fraunces, serif', fontSize: '18px', fontWeight: 700, color: '#1A3A2A', marginBottom: '20px' }}>
+                Permit Cost Calculator
+              </h3>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '13px', color: '#666' }}>Group size:</span>
+                  <button onClick={() => setGroupSize(g => Math.max(1, g - 1))} style={{ width: '28px', height: '28px', borderRadius: '8px', border: '1px solid #DDD', backgroundColor: '#FAFAF8', cursor: 'pointer', fontSize: '16px', lineHeight: 1 }}>−</button>
+                  <span style={{ fontSize: '15px', fontWeight: 700, color: '#1A3A2A', minWidth: '24px', textAlign: 'center' }}>{groupSize}</span>
+                  <button onClick={() => setGroupSize(g => g + 1)} style={{ width: '28px', height: '28px', borderRadius: '8px', border: '1px solid #DDD', backgroundColor: '#FAFAF8', cursor: 'pointer', fontSize: '16px', lineHeight: 1 }}>+</button>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '13px', color: '#666' }}>Currency:</span>
+                  {['USD', 'NPR', 'EUR', 'GBP'].map(c => (
+                    <button key={c} onClick={() => setCurrency(c)} style={{
+                      padding: '4px 12px', borderRadius: '20px', border: 'none', cursor: 'pointer',
+                      fontSize: '12px', fontFamily: 'DM Sans, sans-serif',
+                      backgroundColor: currency === c ? '#1A3A2A' : '#F0EDE8',
+                      color: currency === c ? '#FFFFFF' : '#555',
+                    }}>{c}</button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {trail.permits.map(p => {
+                  const total = parseFloat(p.cost_usd) * groupSize * FX[currency]
+                  return (
+                    <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', backgroundColor: '#FAFAF8', borderRadius: '10px' }}>
+                      <span style={{ fontSize: '14px', color: '#333' }}>{p.name}</span>
+                      <span style={{ fontSize: '15px', fontWeight: 700, color: '#1A3A2A' }}>
+                        {FX_SYM[currency]}{total.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      </span>
+                    </div>
+                  )
+                })}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', backgroundColor: '#1A3A2A', borderRadius: '10px', marginTop: '4px' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#FFFFFF' }}>Total for {groupSize} person{groupSize !== 1 ? 's' : ''}</span>
+                  <span style={{ fontSize: '18px', fontWeight: 700, color: '#C4973A' }}>
+                    {FX_SYM[currency]}{(trail.permits.reduce((s, p) => s + parseFloat(p.cost_usd), 0) * groupSize * FX[currency]).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+              </div>
             </div>
           )}
 
@@ -724,6 +901,137 @@ export default function TrailDetail() {
             </div>
           )}
         </section>
+
+        <div style={{ borderTop: '1px solid #E8E5E0' }} />
+
+        {/* ── REVIEWS ───────────────────────────────────────── */}
+        <section id="reviews" style={{ padding: '72px 0' }}>
+          <p style={{ fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C4973A', marginBottom: '12px' }}>✦ Trekker Feedback</p>
+          <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: isMobile ? '28px' : '40px', fontWeight: 700, color: '#1A3A2A', marginBottom: '40px' }}>
+            Reviews
+          </h2>
+
+          {/* Write a review */}
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: '20px', padding: isMobile ? '20px' : '28px 32px', marginBottom: '32px' }}>
+            <h3 style={{ fontFamily: 'Fraunces, serif', fontSize: '17px', fontWeight: 700, color: '#1A3A2A', marginBottom: '16px' }}>
+              {user ? 'Leave a review' : 'Sign in to leave a review'}
+            </h3>
+            {user ? (
+              <form onSubmit={handleReviewSubmit}>
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '16px' }}>
+                  {[1,2,3,4,5].map(star => (
+                    <button key={star} type="button" onClick={() => setReviewRating(star)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', fontSize: '24px' }}>
+                      {star <= reviewRating ? '★' : '☆'}
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  value={reviewBody}
+                  onChange={e => setReviewBody(e.target.value)}
+                  placeholder="Share your experience on this trail…"
+                  rows={3}
+                  style={{
+                    width: '100%', padding: '12px 14px', borderRadius: '12px',
+                    border: '1px solid #DDD', fontSize: '14px', fontFamily: 'DM Sans, sans-serif',
+                    resize: 'vertical', outline: 'none', boxSizing: 'border-box', lineHeight: 1.6,
+                  }}
+                  onFocus={e => e.target.style.borderColor = '#C4973A'}
+                  onBlur={e  => e.target.style.borderColor = '#DDD'}
+                />
+                <button type="submit" disabled={reviewSaving} style={{
+                  marginTop: '12px', padding: '10px 24px', borderRadius: '10px', border: 'none',
+                  backgroundColor: reviewSaving ? '#9FB89F' : '#1A3A2A', color: '#FFFFFF',
+                  fontSize: '14px', fontWeight: 600, fontFamily: 'DM Sans, sans-serif',
+                  cursor: reviewSaving ? 'not-allowed' : 'pointer',
+                }}>
+                  {reviewSaving ? 'Submitting…' : 'Submit review'}
+                </button>
+              </form>
+            ) : (
+              <Link to="/login" style={{ fontSize: '14px', color: '#C4973A', textDecoration: 'none', fontWeight: 600 }}>
+                Sign in →
+              </Link>
+            )}
+          </div>
+
+          {/* Review list */}
+          {reviews.length === 0 ? (
+            <p style={{ fontSize: '14px', color: '#BBB', textAlign: 'center', padding: '40px 0' }}>No reviews yet — be the first!</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {reviews.map(r => (
+                <div key={r.id} style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: '16px', padding: '20px 24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '34px', height: '34px', borderRadius: '50%', backgroundColor: '#C4973A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, color: '#FFF', flexShrink: 0 }}>
+                        {r.author_init}
+                      </div>
+                      <div>
+                        <p style={{ fontSize: '13px', fontWeight: 600, color: '#1A3A2A' }}>{r.author}</p>
+                        <div style={{ display: 'flex', gap: '2px' }}>
+                          {[1,2,3,4,5].map(i => (
+                            <span key={i} style={{ color: i <= r.rating ? '#C4973A' : '#DDD', fontSize: '13px' }}>★</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ fontSize: '12px', color: '#BBB' }}>{new Date(r.created_at).toLocaleDateString()}</span>
+                      {user && r.author === (user.display_name || user.email.split('@')[0]) && (
+                        <button onClick={() => handleReviewDelete(r.id)} style={{ background: 'none', border: 'none', color: '#CCC', cursor: 'pointer', fontSize: '14px' }}
+                          onMouseEnter={e => e.target.style.color = '#BF360C'}
+                          onMouseLeave={e => e.target.style.color = '#CCC'}>✕</button>
+                      )}
+                    </div>
+                  </div>
+                  {r.body && <p style={{ fontSize: '14px', color: '#555', lineHeight: 1.75 }}>{r.body}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* ── SIMILAR TRAILS ────────────────────────────────── */}
+        {(() => {
+          const similar = allTrails.filter(t =>
+            t.slug !== slug &&
+            (t.difficulty === trail.difficulty || t.region === trail.region)
+          ).slice(0, 3)
+          if (!similar.length) return null
+          const DIFF_BADGE = { easy: { bg: '#E8F5E9', color: '#2E7D32' }, moderate: { bg: '#FFF8E1', color: '#F57F17' }, hard: { bg: '#FBE9E7', color: '#BF360C' }, expert: { bg: '#FCE4EC', color: '#880E4F' } }
+          return (
+            <>
+              <div style={{ borderTop: '1px solid #E8E5E0' }} />
+              <section style={{ padding: '72px 0' }}>
+                <p style={{ fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C4973A', marginBottom: '12px' }}>✦ You might also like</p>
+                <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: isMobile ? '28px' : '36px', fontWeight: 700, color: '#1A3A2A', marginBottom: '32px' }}>
+                  Similar Trails
+                </h2>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '16px' }}>
+                  {similar.map(t => {
+                    const badge = DIFF_BADGE[t.difficulty] || { bg: '#F0EDE8', color: '#555' }
+                    return (
+                      <Link key={t.slug} to={`/trails/${t.slug}`} style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: '16px', padding: '20px', textDecoration: 'none', display: 'block', transition: 'transform 0.2s, box-shadow 0.2s' }}
+                        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.08)' }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}>
+                        <div style={{ display: 'flex', gap: '6px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 500, padding: '3px 10px', borderRadius: '20px', backgroundColor: '#EAF3DE', color: '#3B6D11' }}>{t.region}</span>
+                          <span style={{ fontSize: '11px', fontWeight: 500, padding: '3px 10px', borderRadius: '20px', textTransform: 'capitalize', backgroundColor: badge.bg, color: badge.color }}>{t.difficulty}</span>
+                        </div>
+                        <h3 style={{ fontFamily: 'Fraunces, serif', fontSize: '17px', fontWeight: 700, color: '#1A3A2A', marginBottom: '8px', lineHeight: 1.2 }}>{t.name}</h3>
+                        <div style={{ display: 'flex', gap: '16px' }}>
+                          <span style={{ fontSize: '12px', color: '#888' }}>{t.duration_days}d</span>
+                          <span style={{ fontSize: '12px', color: '#888' }}>{t.max_altitude_m.toLocaleString()}m</span>
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </section>
+            </>
+          )
+        })()}
 
       </div>
 

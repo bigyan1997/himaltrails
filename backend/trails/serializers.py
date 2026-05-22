@@ -30,6 +30,8 @@ class TeahouseSerializer(serializers.ModelSerializer):
 
 class TrailListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for the trails list page."""
+    avg_rating    = serializers.SerializerMethodField()
+    review_count  = serializers.SerializerMethodField()
 
     class Meta:
         model  = Trail
@@ -37,15 +39,28 @@ class TrailListSerializer(serializers.ModelSerializer):
             'id', 'name', 'slug', 'region', 'difficulty',
             'duration_days', 'max_altitude_m', 'best_seasons',
             'trek_style', 'start_point', 'end_point',
+            'latitude', 'longitude',
+            'avg_rating', 'review_count',
         ]
+
+    def get_avg_rating(self, obj):
+        reviews = obj.reviews.all()
+        if not reviews:
+            return None
+        return round(sum(r.rating for r in reviews) / len(reviews), 1)
+
+    def get_review_count(self, obj):
+        return obj.reviews.count()
 
 
 class TrailDetailSerializer(serializers.ModelSerializer):
     """Full serializer for a single trail page."""
 
-    itinerary = ItinerarySerializer(many=True, read_only=True)
-    permits   = PermitSerializer(many=True, read_only=True)
-    teahouses = TeahouseSerializer(many=True, read_only=True)
+    itinerary    = ItinerarySerializer(many=True, read_only=True)
+    permits      = PermitSerializer(many=True, read_only=True)
+    teahouses    = TeahouseSerializer(many=True, read_only=True)
+    avg_rating   = serializers.SerializerMethodField()
+    review_count = serializers.SerializerMethodField()
 
     class Meta:
         model  = Trail
@@ -55,5 +70,16 @@ class TrailDetailSerializer(serializers.ModelSerializer):
             'duration_days', 'difficulty', 'trek_style',
             'start_point', 'end_point', 'best_seasons',
             'permits_required', 'guide_required',
+            'latitude', 'longitude',
+            'avg_rating', 'review_count',
             'itinerary', 'permits', 'teahouses',
         ]
+
+    def get_avg_rating(self, obj):
+        reviews = obj.reviews.all()
+        if not reviews:
+            return None
+        return round(sum(r.rating for r in reviews) / len(reviews), 1)
+
+    def get_review_count(self, obj):
+        return obj.reviews.count()
