@@ -51,6 +51,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -81,17 +82,19 @@ TEMPLATES = [
 WSGI_APPLICATION = 'himaltrails.wsgi.application'
 
 # ─── Database ─────────────────────────────────────────────────────────────────
-#PostgresSQL
+
+import dj_database_url
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
-    }
+    'default': dj_database_url.config(
+        default=(
+            f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
+            f"@{os.getenv('DB_HOST', 'localhost')}:{os.getenv('DB_PORT', '5432')}"
+            f"/{os.getenv('DB_NAME')}"
+        ),
+        conn_max_age=600,
+        ssl_require=not DEBUG,
+    )
 }
 
 # ─── Password Validation ──────────────────────────────────────────────────────
@@ -113,14 +116,21 @@ USE_TZ = True
 # ─── Static Files ─────────────────────────────────────────────────────────────
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# ─── CORS ─────────────────────────────────────────────────────────────────────
-# Allows React (port 5173) to make API calls to Django (port 8000)
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
+}
 
+# ─── CORS ─────────────────────────────────────────────────────────────────────
+
+_extra_cors = [o for o in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if o]
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+    *_extra_cors,
 ]
 
 # ─── REST Framework ───────────────────────────────────────────────────────────

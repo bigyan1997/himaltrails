@@ -28,7 +28,7 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/127\.0\.0\.1:8000\/api\/trails/,
+            urlPattern: /\/api\/trails/,
             handler: "StaleWhileRevalidate",
             options: {
               cacheName: "trails-api",
