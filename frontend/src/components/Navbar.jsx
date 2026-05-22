@@ -44,12 +44,17 @@ export default function Navbar({ transparent = false, children }) {
     }}>
 
       <Link to="/" style={{
+        display: 'flex', alignItems: 'center', gap: '8px',
         fontFamily: 'Fraunces, serif',
         fontSize: '22px',
         fontWeight: 700,
         color: '#C4973A',
         textDecoration: 'none',
       }}>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+          <path d="M3 20 L8 10 L12 15 L16 7 L21 20 Z" fill="#C4973A" opacity="0.9"/>
+          <path d="M16 7 L21 20" stroke="#C4973A" strokeWidth="0" fill="none"/>
+        </svg>
         HimalTrails
       </Link>
 
