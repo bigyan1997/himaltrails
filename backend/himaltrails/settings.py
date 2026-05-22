@@ -130,6 +130,8 @@ _extra_cors = [o for o in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if o]
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+    'https://himaltrails.com',
+    'https://www.himaltrails.com',
     *_extra_cors,
 ]
 
