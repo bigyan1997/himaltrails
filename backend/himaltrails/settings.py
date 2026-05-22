@@ -28,9 +28,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     # Third-party
     'rest_framework',
     'corsheaders',
+
+    # Local apps
+    'trails',
+    'users',
 ]
 
 # ─── Middleware ───────────────────────────────────────────────────────────────
@@ -119,3 +124,8 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ],
 }
+
+# ─── Custom User Model ────────────────────────────────────────────────────────
+# Tells Django to use our email-based user instead of the default username one
+
+AUTH_USER_MODEL = 'users.User'
