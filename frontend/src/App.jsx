@@ -1,5 +1,6 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { useEffect } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
 import BottomNav from "./components/BottomNav";
 import Home        from "./pages/Home";
@@ -34,6 +35,7 @@ function PageWrapper({ children }) {
 
 function AnimatedRoutes() {
   const location = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [location.pathname])
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
