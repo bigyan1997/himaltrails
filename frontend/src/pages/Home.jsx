@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getTrails } from "../services/api";
+import { getPopularTrails } from "../services/api";
 import Navbar from "../components/Navbar";
 import useMobile from "../hooks/useMobile";
 
@@ -170,7 +170,7 @@ export default function Home() {
   const isMobile = useMobile();
 
   useEffect(() => {
-    getTrails().then((res) => setTrails(res.data));
+    getPopularTrails().then((res) => setTrails(res.data));
   }, []);
 
   const featured = trails[0] || null;

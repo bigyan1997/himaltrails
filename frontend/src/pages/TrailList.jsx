@@ -97,7 +97,9 @@ export default function TrailList() {
   const [showFilters, setShowFilters]   = useState(false)
   const [compareList, setCompareList]   = useState([])
   const [showCompare, setShowCompare]   = useState(false)
+  const [page, setPage]                 = useState(1)
   const isMobile = useMobile()
+  const PAGE_SIZE = 6
 
   const toggleCompare = (slug) => {
     setCompareList(prev => {
@@ -132,6 +134,11 @@ export default function TrailList() {
   }, [trails, filter, search, minDays, maxDays, maxAlt])
 
   const hasAdvancedFilter = minDays || maxDays || maxAlt
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
+  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+  useEffect(() => { setPage(1) }, [filter, search, minDays, maxDays, maxAlt])
 
   return (
     <div style={{ backgroundColor: '#F7F5F0', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif' }}>
@@ -327,7 +334,7 @@ export default function TrailList() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {filtered.map(trail => {
+            {paginated.map(trail => {
               const badge = DIFFICULTY_BADGE[trail.difficulty] || { bg: '#F0EDE8', color: '#555' }
               return (
                 <Link
@@ -478,6 +485,60 @@ export default function TrailList() {
             })}
           </div>
         )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '48px', paddingBottom: '16px' }}>
+            <button
+              onClick={() => { setPage(p => p - 1); window.scrollTo(0, 0) }}
+              disabled={page === 1}
+              style={{
+                padding: '10px 20px', borderRadius: '12px', border: '1px solid #E0DDD8',
+                backgroundColor: page === 1 ? '#F5F2EE' : '#1A3A2A',
+                color: page === 1 ? '#CCC' : '#FFFFFF',
+                fontSize: '13px', fontFamily: 'DM Sans, sans-serif',
+                cursor: page === 1 ? 'not-allowed' : 'pointer', fontWeight: 500,
+              }}
+            >
+              ← Prev
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
+              <button
+                key={n}
+                onClick={() => { setPage(n); window.scrollTo(0, 0) }}
+                style={{
+                  width: '40px', height: '40px', borderRadius: '10px',
+                  border: '1px solid', cursor: 'pointer',
+                  fontFamily: 'DM Sans, sans-serif', fontSize: '14px', fontWeight: 600,
+                  borderColor: n === page ? '#1A3A2A' : '#E0DDD8',
+                  backgroundColor: n === page ? '#1A3A2A' : '#FFFFFF',
+                  color: n === page ? '#FFFFFF' : '#555',
+                }}
+              >
+                {n}
+              </button>
+            ))}
+
+            <button
+              onClick={() => { setPage(p => p + 1); window.scrollTo(0, 0) }}
+              disabled={page === totalPages}
+              style={{
+                padding: '10px 20px', borderRadius: '12px', border: '1px solid #E0DDD8',
+                backgroundColor: page === totalPages ? '#F5F2EE' : '#1A3A2A',
+                color: page === totalPages ? '#CCC' : '#FFFFFF',
+                fontSize: '13px', fontFamily: 'DM Sans, sans-serif',
+                cursor: page === totalPages ? 'not-allowed' : 'pointer', fontWeight: 500,
+              }}
+            >
+              Next →
+            </button>
+          </div>
+        )}
+
+        <p style={{ textAlign: 'center', fontSize: '13px', color: '#AAA', marginTop: '8px', paddingBottom: '40px' }}>
+          {filtered.length === 0 ? '' : `Showing ${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, filtered.length)} of ${filtered.length} trails`}
+        </p>
       </div>
 
     </div>

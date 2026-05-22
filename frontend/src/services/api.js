@@ -36,8 +36,9 @@ api.interceptors.response.use(
 );
 
 // Trails
-export const getTrails = () => api.get("/trails/");
-export const getTrail  = (slug) => api.get(`/trails/${slug}/`);
+export const getTrails        = ()     => api.get("/trails/");
+export const getTrail         = (slug) => api.get(`/trails/${slug}/`);
+export const getPopularTrails = ()     => api.get("/trails/popular/");
 
 // Auth
 export const login       = (email, password) => api.post("/auth/login/",        { email, password });

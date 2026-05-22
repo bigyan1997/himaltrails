@@ -1,3 +1,4 @@
+from django.db.models import Count
 from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from .models import Trail
@@ -12,8 +13,6 @@ class TrailListView(generics.ListAPIView):
     def get_queryset(self):
         queryset = Trail.objects.filter(is_published=True)
 
-        # Optional filters from query params
-        # e.g. /api/trails/?region=Everest&difficulty=hard
         region     = self.request.query_params.get('region')
         difficulty = self.request.query_params.get('difficulty')
 
@@ -23,6 +22,20 @@ class TrailListView(generics.ListAPIView):
             queryset = queryset.filter(difficulty=difficulty)
 
         return queryset
+
+
+class PopularTrailsView(generics.ListAPIView):
+    """Returns top 5 trails by review count."""
+    serializer_class   = TrailListSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return (
+            Trail.objects
+            .filter(is_published=True)
+            .annotate(num_reviews=Count('reviews'))
+            .order_by('-num_reviews')[:5]
+        )
 
 
 class TrailDetailView(generics.RetrieveAPIView):
