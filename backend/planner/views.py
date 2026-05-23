@@ -1,4 +1,5 @@
 from datetime import date as date_type
+from django.db.models import Max
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
@@ -6,11 +7,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from trails.models import Trail
-from .models import SavedTrail, TripNote, PackingItem, Review, CompletedTrail, TripPlan, ConditionReport, SafetyCheckIn, UserPermit
+from .models import SavedTrail, TripNote, PackingItem, Review, CompletedTrail, TripPlan, ConditionReport, SafetyCheckIn, UserPermit, ItineraryPlan, ItineraryWaypoint
 from .serializers import (
     SavedTrailSerializer, TripNoteSerializer, PackingItemSerializer,
     ReviewSerializer, CompletedTrailSerializer, TripPlanSerializer,
     ConditionReportSerializer, SafetyCheckInSerializer, UserPermitSerializer,
+    ItineraryPlanSerializer, ItineraryWaypointSerializer,
 )
 
 
@@ -283,4 +285,68 @@ class UserPermitDetailView(APIView):
     def delete(self, request, pk):
         obj = get_object_or_404(UserPermit, pk=pk, user=request.user)
         obj.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# ── Itinerary Planner ──────────────────────────────────────────────────────────
+
+class ItineraryPlanListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        qs = ItineraryPlan.objects.filter(user=request.user).prefetch_related('waypoints')
+        return Response(ItineraryPlanSerializer(qs, many=True).data)
+
+    def post(self, request):
+        name = request.data.get('name', '').strip()
+        if not name:
+            return Response({'error': 'name is required'}, status=status.HTTP_400_BAD_REQUEST)
+        trail_slug = request.data.get('trail_slug')
+        trail = get_object_or_404(Trail, slug=trail_slug) if trail_slug else None
+        plan = ItineraryPlan.objects.create(user=request.user, name=name, trail=trail)
+        return Response(ItineraryPlanSerializer(plan).data, status=status.HTTP_201_CREATED)
+
+
+class ItineraryPlanDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        plan = get_object_or_404(ItineraryPlan, pk=pk, user=request.user)
+        if 'name' in request.data:
+            plan.name = request.data['name']
+            plan.save()
+        return Response(ItineraryPlanSerializer(plan).data)
+
+    def delete(self, request, pk):
+        plan = get_object_or_404(ItineraryPlan, pk=pk, user=request.user)
+        plan.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ItineraryWaypointListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, plan_pk):
+        plan = get_object_or_404(ItineraryPlan, pk=plan_pk, user=request.user)
+        serializer = ItineraryWaypointSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        day_num = request.data.get('day_number', 1)
+        max_order = plan.waypoints.filter(day_number=day_num).aggregate(m=Max('order'))['m'] or 0
+        wp = serializer.save(plan=plan, order=max_order + 1)
+        return Response(ItineraryWaypointSerializer(wp).data, status=status.HTTP_201_CREATED)
+
+
+class ItineraryWaypointDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        wp = get_object_or_404(ItineraryWaypoint, pk=pk, plan__user=request.user)
+        serializer = ItineraryWaypointSerializer(wp, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, pk):
+        wp = get_object_or_404(ItineraryWaypoint, pk=pk, plan__user=request.user)
+        wp.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

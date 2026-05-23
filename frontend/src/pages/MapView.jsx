@@ -102,6 +102,9 @@ export default function MapView() {
             <Link to="/peaks" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '10px', backgroundColor: '#1A3A2A', color: '#FFFFFF', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>
               🏔 Peak Finder
             </Link>
+            <Link to="/itinerary" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '10px', backgroundColor: '#C4973A', color: '#FFFFFF', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>
+              🗺 Plan Route
+            </Link>
             {/* Legend */}
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               {Object.entries(DIFF_COLOR).map(([diff, color]) => (

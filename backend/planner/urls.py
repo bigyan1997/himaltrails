@@ -18,4 +18,8 @@ urlpatterns = [
     path('safety/<int:pk>/',                     views.SafetyCheckInDetailView.as_view()),
     path('permits/',                             views.UserPermitListView.as_view()),
     path('permits/<int:pk>/',                    views.UserPermitDetailView.as_view()),
+    path('itinerary/',                           views.ItineraryPlanListView.as_view()),
+    path('itinerary/<int:pk>/',                  views.ItineraryPlanDetailView.as_view()),
+    path('itinerary/<int:plan_pk>/waypoints/',   views.ItineraryWaypointListView.as_view()),
+    path('waypoints/<int:pk>/',                  views.ItineraryWaypointDetailView.as_view()),
 ]

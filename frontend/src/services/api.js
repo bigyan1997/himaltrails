@@ -95,4 +95,11 @@ export const deleteUserPermit = (id)     => api.delete(`/planner/permits/${id}/`
 // Guides directory
 export const getGuides = (region) => api.get('/guides/', { params: region ? { region } : {} });
 
+// Itinerary planner
+export const getItineraryPlans   = ()              => api.get('/planner/itinerary/');
+export const createItineraryPlan = (data)          => api.post('/planner/itinerary/', data);
+export const deleteItineraryPlan = (id)            => api.delete(`/planner/itinerary/${id}/`);
+export const addWaypoint         = (planId, data)  => api.post(`/planner/itinerary/${planId}/waypoints/`, data);
+export const deleteWaypoint      = (id)            => api.delete(`/planner/waypoints/${id}/`);
+
 export default api;

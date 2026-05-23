@@ -9,9 +9,10 @@ import TrailDetail from "./pages/TrailDetail";
 import Login       from "./pages/Login";
 import Register    from "./pages/Register";
 import Dashboard   from "./pages/Dashboard";
-import MapView     from "./pages/MapView";
-import Guides      from "./pages/Guides";
-import PeakFinder  from "./pages/PeakFinder";
+import MapView      from "./pages/MapView";
+import Guides       from "./pages/Guides";
+import PeakFinder   from "./pages/PeakFinder";
+import ItineraryMap from "./pages/ItineraryMap";
 
 const pageVariants = {
   initial: { opacity: 0, y: 16, scale: 0.994 },
@@ -83,6 +84,7 @@ function AnimatedRoutes() {
           <Route path="/peaks"        element={<PageWrapper><PeakFinder /></PageWrapper>} />
           <Route path="/login"        element={<PageWrapper><Login /></PageWrapper>} />
           <Route path="/register"     element={<PageWrapper><Register /></PageWrapper>} />
+          <Route path="/itinerary"    element={<PageWrapper><ItineraryMap /></PageWrapper>} />
           <Route path="/dashboard"    element={<PageWrapper><Dashboard /></PageWrapper>} />
         </Routes>
       </AnimatePresence>

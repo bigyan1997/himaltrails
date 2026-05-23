@@ -152,3 +152,46 @@ class UserPermit(models.Model):
 
     def __str__(self):
         return f'{self.user.email}: {self.permit_name}'
+
+
+class ItineraryPlan(models.Model):
+    user       = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='itinerary_plans')
+    name       = models.CharField(max_length=200)
+    trail      = models.ForeignKey('trails.Trail', on_delete=models.CASCADE, related_name='itinerary_plans', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f'{self.user.email}: {self.name}'
+
+
+class ItineraryWaypoint(models.Model):
+    WAYPOINT_TYPES = [
+        ('teahouse',  'Teahouse'),
+        ('camp',      'Camp'),
+        ('pass',      'Pass'),
+        ('viewpoint', 'Viewpoint'),
+        ('village',   'Village'),
+        ('start',     'Start'),
+        ('finish',    'Finish'),
+        ('other',     'Other'),
+    ]
+    plan          = models.ForeignKey(ItineraryPlan, on_delete=models.CASCADE, related_name='waypoints')
+    day_number    = models.IntegerField()
+    order         = models.IntegerField(default=0)
+    name          = models.CharField(max_length=200)
+    latitude      = models.DecimalField(max_digits=9, decimal_places=6)
+    longitude     = models.DecimalField(max_digits=9, decimal_places=6)
+    altitude_m    = models.IntegerField(null=True, blank=True)
+    waypoint_type = models.CharField(max_length=20, choices=WAYPOINT_TYPES, default='teahouse')
+    notes         = models.TextField(blank=True)
+    created_at    = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['day_number', 'order', 'created_at']
+
+    def __str__(self):
+        return f'{self.plan.name} D{self.day_number}: {self.name}'

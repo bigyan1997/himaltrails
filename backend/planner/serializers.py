@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from trails.serializers import TrailListSerializer
-from .models import SavedTrail, TripNote, PackingItem, Review, CompletedTrail, TripPlan, ConditionReport, SafetyCheckIn, UserPermit
+from .models import SavedTrail, TripNote, PackingItem, Review, CompletedTrail, TripPlan, ConditionReport, SafetyCheckIn, UserPermit, ItineraryPlan, ItineraryWaypoint
 
 
 class SavedTrailSerializer(serializers.ModelSerializer):
@@ -125,3 +125,24 @@ class UserPermitSerializer(serializers.ModelSerializer):
     def get_is_expired(self, obj):
         from datetime import date
         return obj.expiry_date < date.today()
+
+
+class ItineraryWaypointSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = ItineraryWaypoint
+        fields = ['id', 'day_number', 'order', 'name', 'latitude', 'longitude', 'altitude_m', 'waypoint_type', 'notes', 'created_at']
+
+
+class ItineraryPlanSerializer(serializers.ModelSerializer):
+    waypoints      = ItineraryWaypointSerializer(many=True, read_only=True)
+    trail_name     = serializers.SerializerMethodField()
+    trail_slug     = serializers.SerializerMethodField()
+    trail_duration = serializers.SerializerMethodField()
+
+    class Meta:
+        model  = ItineraryPlan
+        fields = ['id', 'name', 'trail_name', 'trail_slug', 'trail_duration', 'waypoints', 'created_at', 'updated_at']
+
+    def get_trail_name(self, obj):     return obj.trail.name          if obj.trail else None
+    def get_trail_slug(self, obj):     return obj.trail.slug          if obj.trail else None
+    def get_trail_duration(self, obj): return obj.trail.duration_days if obj.trail else None
