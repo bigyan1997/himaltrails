@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">HimalTrails</string>
+    <string name="title_activity_main">HimalTrails</string>
+    <string name="package_name">com.himaltrails.app</string>
+    <string name="custom_url_scheme">com.himaltrails.app</string>
+</resources>
