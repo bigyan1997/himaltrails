@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
+import SEO from '../components/SEO'
 import { TrailDetailSkeleton } from '../components/Skeleton'
 import {
   getTrail, getSavedTrails, saveTrail, unsaveTrail,
@@ -303,8 +304,39 @@ export default function TrailDetail() {
   const pullQuote = dotIdx > 0 ? trail.description.slice(0, dotIdx + 1) : ''
   const bodyText  = dotIdx > 0 ? trail.description.slice(dotIdx + 1).trim() : trail.description
 
+  const seoDescription = `${trail.name} trek — ${trail.duration_days} days, ${trail.max_altitude_m?.toLocaleString()}m max altitude, ${trail.difficulty} difficulty. ${trail.region} region, Nepal. ${trail.description?.slice(0, 120) || ''}`
+
   return (
     <div style={{ backgroundColor: '#F7F5F0', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif' }}>
+      <SEO
+        title={`${trail.name} Trek`}
+        description={seoDescription}
+        url={`/trails/${trail.slug}`}
+        type="article"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "TouristAttraction",
+          "name": `${trail.name} Trek`,
+          "description": trail.description,
+          "url": `https://himaltrails.com/trails/${trail.slug}`,
+          "touristType": "Trekking / Hiking",
+          "geo": trail.latitude && trail.longitude ? {
+            "@type": "GeoCoordinates",
+            "latitude": trail.latitude,
+            "longitude": trail.longitude
+          } : undefined,
+          "containedInPlace": {
+            "@type": "Country",
+            "name": "Nepal"
+          },
+          "aggregateRating": trail.avg_rating && trail.review_count ? {
+            "@type": "AggregateRating",
+            "ratingValue": trail.avg_rating,
+            "reviewCount": trail.review_count,
+            "bestRating": 5
+          } : undefined
+        }}
+      />
 
       <Navbar transparent>
         <Link to="/trails" style={{

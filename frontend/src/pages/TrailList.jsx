@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { getTrails } from '../services/api'
 import Navbar from '../components/Navbar'
+import SEO from '../components/SEO'
 import { TrailCardSkeleton } from '../components/Skeleton'
 import useMobile from '../hooks/useMobile'
 
@@ -143,6 +144,11 @@ export default function TrailList() {
 
   return (
     <div style={{ backgroundColor: '#F7F5F0', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif' }}>
+      <SEO
+        title="Nepal Trekking Trails"
+        description="Browse all Nepal trekking routes — Everest Base Camp, Annapurna Circuit, Langtang, Manaslu and more. Filter by difficulty, duration, region and season."
+        url="/trails"
+      />
 
       {showCompare && compareList.length === 2 && (
         <ComparePanel trails={trails} selected={compareList} onClose={() => setShowCompare(false)} />

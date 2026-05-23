@@ -5,6 +5,7 @@ import L from 'leaflet'
 import { getTrails, getItineraryPlans, createItineraryPlan, deleteItineraryPlan, addWaypoint, deleteWaypoint } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 import Navbar from '../components/Navbar'
+import SEO from '../components/SEO'
 import useMobile from '../hooks/useMobile'
 import 'leaflet/dist/leaflet.css'
 
@@ -778,6 +779,11 @@ export default function ItineraryMap() {
 
   return (
     <div style={{ backgroundColor: '#F7F5F0', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif', display: 'flex', flexDirection: 'column' }}>
+      <SEO
+        title="Trek Itinerary Planner"
+        description="Plan your Nepal trek day by day. Drop waypoints on a map, get distance and hiking time estimates, export your route as a GPX file, and save tiles for offline use."
+        url="/itinerary"
+      />
       <Navbar>
         <Link to="/map" style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>
           Map

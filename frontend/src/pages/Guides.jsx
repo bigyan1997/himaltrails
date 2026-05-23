@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getGuides } from '../services/api'
 import Navbar from '../components/Navbar'
+import SEO from '../components/SEO'
 import useMobile from '../hooks/useMobile'
 
 const REGIONS = ['All', 'Khumbu', 'Annapurna', 'Langtang', 'Mustang', 'Everest', 'Manaslu']
@@ -45,6 +46,11 @@ export default function Guides() {
 
   return (
     <div style={{ backgroundColor: '#F7F5F0', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif' }}>
+      <SEO
+        title="Nepal Trekking Guides Directory"
+        description="Find experienced, verified Nepal trekking guides for EBC, Annapurna, Langtang, Mustang and more. Filter by region, language and specialty."
+        url="/guides"
+      />
       <Navbar>
         <Link to="/trails" style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>
           Trails

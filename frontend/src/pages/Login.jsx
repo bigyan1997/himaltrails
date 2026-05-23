@@ -4,6 +4,7 @@ import { useGoogleLogin } from '@react-oauth/google'
 import { useAuth } from '../contexts/AuthContext'
 import { googleLogin as apiGoogleLogin } from '../services/api'
 import Navbar from '../components/Navbar'
+import SEO from '../components/SEO'
 
 export default function Login() {
   const { login, loginWithTokens } = useAuth()
@@ -62,6 +63,7 @@ export default function Login() {
 
   return (
     <div style={{ backgroundColor: '#F7F5F0', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif' }}>
+      <SEO title="Sign In" noindex />
       <Navbar>
         <Link to="/trails" style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>
           Trails

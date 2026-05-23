@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { getTrails } from '../services/api'
 import Navbar from '../components/Navbar'
+import SEO from '../components/SEO'
 import useMobile from '../hooks/useMobile'
 import 'leaflet/dist/leaflet.css'
 
@@ -70,6 +71,11 @@ export default function MapView() {
 
   return (
     <div style={{ backgroundColor: '#F7F5F0', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif', display: 'flex', flexDirection: 'column' }}>
+      <SEO
+        title="Nepal Trail Map"
+        description="Interactive map of all Nepal trekking trails. View EBC, Annapurna, Langtang and more plotted across Nepal with difficulty, altitude and duration info."
+        url="/map"
+      />
       <Navbar>
         <Link to="/trails" style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>
           Trails

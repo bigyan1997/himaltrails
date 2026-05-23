@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
+import SEO from '../components/SEO'
 import useMobile from '../hooks/useMobile'
 
 const PEAKS = [
@@ -134,6 +135,11 @@ export default function PeakFinder() {
 
   return (
     <div style={{ backgroundColor: '#0A1A12', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif', color: '#FFFFFF' }}>
+      <SEO
+        title="Nepal Peak Finder — AR Peak Identifier"
+        description="Point your camera at the mountains and identify Himalayan peaks in real time. Augmented reality peak finder for trekkers in Nepal."
+        url="/peaks"
+      />
       <Navbar>
         <Link to="/map" style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>
           Map

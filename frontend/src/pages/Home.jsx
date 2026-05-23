@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getPopularTrails } from "../services/api";
 import Navbar from "../components/Navbar";
+import SEO from "../components/SEO";
 import useMobile from "../hooks/useMobile";
 
 // Smooth Catmull-Rom spline through EBC altitude data (Lukla → Kala Patthar → Lukla)
@@ -186,6 +187,22 @@ export default function Home() {
         overflowX: "hidden",
       }}
     >
+      <SEO
+        url="/"
+        description="Plan your Nepal trek with honest, detailed guides for EBC, Annapurna Circuit, Langtang, Manaslu and more. Permits, teahouses, offline maps — all in one place."
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "name": "HimalTrails",
+          "url": "https://himaltrails.com",
+          "description": "Nepal trekking guide for independent trekkers",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://himaltrails.com/trails?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        }}
+      />
       <Navbar transparent>
         <Link
           to="/trails"

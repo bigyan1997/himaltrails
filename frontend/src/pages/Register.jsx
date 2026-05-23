@@ -4,6 +4,7 @@ import { useGoogleLogin } from '@react-oauth/google'
 import { register, googleLogin as apiGoogleLogin } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 import Navbar from '../components/Navbar'
+import SEO from '../components/SEO'
 
 const checks = [
   { key: 'len',     label: 'At least 8 characters',    test: p => p.length >= 8 },
@@ -85,6 +86,7 @@ export default function Register() {
 
   return (
     <div style={{ backgroundColor: '#F7F5F0', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif' }}>
+      <SEO title="Create Account" noindex />
       <Navbar>
         <Link to="/trails" style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>
           Trails
