@@ -129,3 +129,27 @@ class Teahouse(models.Model):
 
     def __str__(self):
         return f"{self.name} — {self.location}"
+
+
+class Guide(models.Model):
+    name              = models.CharField(max_length=200)
+    license_number    = models.CharField(max_length=100, blank=True)
+    experience_years  = models.IntegerField(default=0)
+    specialties       = models.CharField(max_length=400, blank=True, help_text='comma-separated')
+    languages         = models.CharField(max_length=200, blank=True)
+    trails            = models.ManyToManyField(Trail, blank=True, related_name='guides')
+    price_per_day_usd = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    contact_phone     = models.CharField(max_length=30, blank=True)
+    contact_email     = models.EmailField(blank=True)
+    photo_url         = models.URLField(max_length=500, blank=True)
+    bio               = models.TextField(blank=True)
+    rating            = models.DecimalField(max_digits=3, decimal_places=1, default=5.0)
+    review_count      = models.IntegerField(default=0)
+    region            = models.CharField(max_length=100, blank=True)
+    is_active         = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-rating', 'name']
+
+    def __str__(self):
+        return self.name

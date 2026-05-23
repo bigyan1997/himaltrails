@@ -6,11 +6,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from trails.models import Trail
-from .models import SavedTrail, TripNote, PackingItem, Review, CompletedTrail, TripPlan, ConditionReport
+from .models import SavedTrail, TripNote, PackingItem, Review, CompletedTrail, TripPlan, ConditionReport, SafetyCheckIn, UserPermit
 from .serializers import (
     SavedTrailSerializer, TripNoteSerializer, PackingItemSerializer,
     ReviewSerializer, CompletedTrailSerializer, TripPlanSerializer,
-    ConditionReportSerializer,
+    ConditionReportSerializer, SafetyCheckInSerializer, UserPermitSerializer,
 )
 
 
@@ -220,4 +220,67 @@ class TripPlanDetailView(APIView):
     def delete(self, request, trail_slug):
         trail = get_object_or_404(Trail, slug=trail_slug)
         TripPlan.objects.filter(user=request.user, trail=trail).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# ── Safety Check-Ins ───────────────────────────────────────────────────────────
+
+class SafetyCheckInListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        qs = SafetyCheckIn.objects.filter(user=request.user).select_related('trail')
+        return Response(SafetyCheckInSerializer(qs, many=True).data)
+
+    def post(self, request):
+        slug  = request.data.get('trail_slug')
+        trail = get_object_or_404(Trail, slug=slug)
+        serializer = SafetyCheckInSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        obj = serializer.save(user=request.user, trail=trail)
+        return Response(SafetyCheckInSerializer(obj).data, status=status.HTTP_201_CREATED)
+
+
+class SafetyCheckInDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        obj = get_object_or_404(SafetyCheckIn, pk=pk, user=request.user)
+        if request.data.get('checked_in'):
+            from django.utils import timezone
+            obj.checked_in    = True
+            obj.checked_in_at = timezone.now()
+            obj.save()
+        return Response(SafetyCheckInSerializer(obj).data)
+
+    def delete(self, request, pk):
+        obj = get_object_or_404(SafetyCheckIn, pk=pk, user=request.user)
+        obj.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# ── User Permits ───────────────────────────────────────────────────────────────
+
+class UserPermitListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        qs = UserPermit.objects.filter(user=request.user).select_related('trail')
+        return Response(UserPermitSerializer(qs, many=True).data)
+
+    def post(self, request):
+        slug  = request.data.get('trail_slug')
+        trail = get_object_or_404(Trail, slug=slug) if slug else None
+        serializer = UserPermitSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        obj = serializer.save(user=request.user, trail=trail)
+        return Response(UserPermitSerializer(obj).data, status=status.HTTP_201_CREATED)
+
+
+class UserPermitDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        obj = get_object_or_404(UserPermit, pk=pk, user=request.user)
+        obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

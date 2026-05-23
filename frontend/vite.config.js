@@ -52,6 +52,23 @@ export default defineConfig({
               networkTimeoutSeconds: 5,
             },
           },
+          {
+            urlPattern: /^https:\/\/[abc]\.tile\.openstreetmap\.org/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "osm-tiles",
+              expiration: { maxEntries: 500, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/unpkg\.com\/leaflet/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "leaflet-assets",
+              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+            },
+          },
         ],
       },
     }),

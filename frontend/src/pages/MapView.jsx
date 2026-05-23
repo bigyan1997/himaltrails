@@ -7,6 +7,18 @@ import Navbar from '../components/Navbar'
 import useMobile from '../hooks/useMobile'
 import 'leaflet/dist/leaflet.css'
 
+function useOfflineStatus() {
+  const [offline, setOffline] = useState(!navigator.onLine)
+  useEffect(() => {
+    const on  = () => setOffline(false)
+    const off = () => setOffline(true)
+    window.addEventListener('online',  on)
+    window.addEventListener('offline', off)
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off) }
+  }, [])
+  return offline
+}
+
 // Fix Leaflet default icon paths broken by bundlers
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -48,6 +60,7 @@ export default function MapView() {
   const [loading, setLoading]     = useState(true)
   const [selected, setSelected]   = useState(null)
   const isMobile                  = useMobile()
+  const offline                   = useOfflineStatus()
 
   useEffect(() => {
     getTrails().then(res => setTrails(res.data)).finally(() => setLoading(false))
@@ -66,6 +79,15 @@ export default function MapView() {
         </Link>
       </Navbar>
 
+      {/* Offline banner */}
+      {offline && (
+        <div style={{ backgroundColor: '#F57F17', padding: '10px 24px', textAlign: 'center' }}>
+          <p style={{ fontSize: '13px', fontWeight: 600, color: '#FFFFFF' }}>
+            You're offline — showing cached trail data. Map tiles may not load.
+          </p>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ padding: isMobile ? '24px 20px 16px' : '32px 48px 20px', backgroundColor: '#FFFFFF', borderBottom: '1px solid #E8E5E0' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
@@ -75,14 +97,20 @@ export default function MapView() {
             </h1>
             <p style={{ fontSize: '14px', color: '#999' }}>{mapped.length} trails plotted across Nepal</p>
           </div>
-          {/* Legend */}
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            {Object.entries(DIFF_COLOR).map(([diff, color]) => (
-              <div key={diff} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: color }} />
-                <span style={{ fontSize: '12px', color: '#666', textTransform: 'capitalize' }}>{diff}</span>
-              </div>
-            ))}
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Peak Finder link */}
+            <Link to="/peaks" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '10px', backgroundColor: '#1A3A2A', color: '#FFFFFF', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>
+              🏔 Peak Finder
+            </Link>
+            {/* Legend */}
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              {Object.entries(DIFF_COLOR).map(([diff, color]) => (
+                <div key={diff} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: color }} />
+                  <span style={{ fontSize: '12px', color: '#666', textTransform: 'capitalize' }}>{diff}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

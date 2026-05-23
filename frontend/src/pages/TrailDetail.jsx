@@ -7,6 +7,7 @@ import {
   getCompletedTrails, markCompleted, unmarkCompleted,
   getTrails,
   getConditionReports, submitConditionReport,
+  createSafetyCheckIn, getSafetyCheckIns, checkinSafe, deleteSafetyCheckIn,
 } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 import Navbar from '../components/Navbar'
@@ -17,6 +18,7 @@ const SECTIONS = [
   { id: 'itinerary',   label: 'Itinerary' },
   { id: 'permits',     label: 'Permits' },
   { id: 'teahouses',   label: 'Teahouses' },
+  { id: 'safety',      label: 'Safety' },
   { id: 'conditions',  label: 'Conditions' },
   { id: 'reviews',     label: 'Reviews' },
 ]
@@ -92,6 +94,10 @@ export default function TrailDetail() {
   const [reportStatus, setReportStatus] = useState('open')
   const [reportDesc, setReportDesc]     = useState('')
   const [reportSaving, setReportSaving] = useState(false)
+  const [activeCheckin, setActiveCheckin] = useState(null)
+  const [checkinForm, setCheckinForm]   = useState({ emergency_name: '', emergency_email: '', emergency_phone: '', start_date: '', expected_return: '' })
+  const [checkinSaving, setCheckinSaving] = useState(false)
+  const [showCheckinForm, setShowCheckinForm] = useState(false)
   const isMobile                        = useMobile()
   const scrolling                       = useRef(false)
 
@@ -118,6 +124,14 @@ export default function TrailDetail() {
   useEffect(() => {
     getConditionReports(slug).then(res => setConditionReports(res.data)).catch(() => {})
   }, [slug])
+
+  useEffect(() => {
+    if (!user) return
+    getSafetyCheckIns().then(res => {
+      const match = res.data.find(c => c.trail_slug === slug && !c.checked_in)
+      setActiveCheckin(match || null)
+    }).catch(() => {})
+  }, [user, slug])
 
   useEffect(() => {
     getTrails().then(res => setAllTrails(res.data)).catch(() => {})
@@ -178,6 +192,34 @@ export default function TrailDetail() {
   const handleReviewDelete = async (id) => {
     await deleteReview(slug, id)
     setReviews(r => r.filter(x => x.id !== id))
+  }
+
+  const handleCheckinSubmit = async (e) => {
+    e.preventDefault()
+    if (!user) { navigate('/login', { state: { from: `/trails/${slug}` } }); return }
+    setCheckinSaving(true)
+    try {
+      const res = await createSafetyCheckIn({ ...checkinForm, trail_slug: slug })
+      setActiveCheckin(res.data)
+      setShowCheckinForm(false)
+      setCheckinForm({ emergency_name: '', emergency_email: '', emergency_phone: '', start_date: '', expected_return: '' })
+    } finally {
+      setCheckinSaving(false)
+    }
+  }
+
+  const handleCheckinSafe = async (id) => {
+    try {
+      const res = await checkinSafe(id)
+      setActiveCheckin(res.data)
+    } catch (_) {}
+  }
+
+  const handleDeleteCheckin = async (id) => {
+    try {
+      await deleteSafetyCheckIn(id)
+      setActiveCheckin(null)
+    } catch (_) {}
   }
 
   const handleConditionSubmit = async (e) => {
@@ -1070,6 +1112,212 @@ export default function TrailDetail() {
 
         <div style={{ borderTop: '1px solid #E8E5E0' }} />
 
+        {/* ── SAFETY ────────────────────────────────────────── */}
+        <section id="safety" style={{ padding: '72px 0' }}>
+          <p style={{ fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C4973A', marginBottom: '12px' }}>✦ Health &amp; Safety</p>
+          <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: isMobile ? '28px' : '40px', fontWeight: 700, color: '#1A3A2A', marginBottom: '12px' }}>
+            Safety &amp; AMS Guide
+          </h2>
+          <p style={{ fontSize: '15px', color: '#888', marginBottom: '48px', lineHeight: 1.7 }}>
+            Altitude sickness affects 1 in 3 trekkers above 3,500m. Review the daily gain analysis and register a safety check-in so someone at home knows your plan.
+          </p>
+
+          {/* AMS altitude gain analysis */}
+          {(() => {
+            const days = (trail.itinerary || []).filter(d => d.altitude_m > 0)
+            if (days.length < 2) return null
+            const risks = days.map((d, i) => {
+              const prev  = i === 0 ? days[0].altitude_m : days[i - 1].altitude_m
+              const gain  = d.altitude_m - prev
+              const isHigh = d.altitude_m > 3000
+              let risk = 'safe'
+              if (isHigh && gain > 500) risk = 'danger'
+              else if (isHigh && gain > 300) risk = 'warning'
+              return { ...d, gain: i === 0 ? 0 : gain, risk }
+            })
+            const RISK = {
+              safe:    { bg: '#E8F5E9', color: '#2E7D32', label: 'Safe'    },
+              warning: { bg: '#FFF8E1', color: '#F57F17', label: 'Caution' },
+              danger:  { bg: '#FBE9E7', color: '#BF360C', label: 'Risky'   },
+            }
+            const dangerDays = risks.filter(r => r.risk === 'danger').length
+            const warnDays   = risks.filter(r => r.risk === 'warning').length
+            return (
+              <div style={{ marginBottom: '40px' }}>
+                <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: '20px', padding: isMobile ? '20px' : '28px 32px', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+                    <p style={{ fontSize: '13px', fontWeight: 700, color: '#1A3A2A' }}>Daily Altitude Gain Analysis</p>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {dangerDays > 0 && <span style={{ fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '20px', backgroundColor: '#FBE9E7', color: '#BF360C' }}>{dangerDays} risky day{dangerDays > 1 ? 's' : ''}</span>}
+                      {warnDays   > 0 && <span style={{ fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '20px', backgroundColor: '#FFF8E1', color: '#F57F17' }}>{warnDays} caution day{warnDays > 1 ? 's' : ''}</span>}
+                      {dangerDays === 0 && warnDays === 0 && <span style={{ fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '20px', backgroundColor: '#E8F5E9', color: '#2E7D32' }}>All days within safe limits</span>}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {risks.map(d => {
+                      const r = RISK[d.risk]
+                      return (
+                        <div key={d.day} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '10px', backgroundColor: r.bg + '55' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 700, color: '#C4973A', width: '44px', flexShrink: 0 }}>Day {d.day}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontSize: '13px', color: '#333', fontWeight: 500, marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.title}</p>
+                            <p style={{ fontSize: '11px', color: '#888' }}>{d.altitude_m.toLocaleString()}m altitude{d.gain > 0 ? ` · +${d.gain}m gain` : ''}</p>
+                          </div>
+                          {/* Gain bar */}
+                          {d.gain > 0 && (
+                            <div style={{ width: '80px', flexShrink: 0 }}>
+                              <div style={{ height: '4px', backgroundColor: '#F0EDE8', borderRadius: '2px', overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${Math.min(100, d.gain / 600 * 100)}%`, backgroundColor: r.color, borderRadius: '2px' }} />
+                              </div>
+                            </div>
+                          )}
+                          <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', backgroundColor: r.bg, color: r.color, flexShrink: 0 }}>{r.label}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+                {/* AMS info cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '12px' }}>
+                  {[
+                    { icon: '📏', title: 'The 300m Rule', body: 'Above 3,000m, aim to gain no more than 300–500m of sleeping altitude per day. If you gain more, build in a rest day.' },
+                    { icon: '🔄', title: 'Climb High, Sleep Low', body: 'Day hikes above your sleeping altitude help acclimatisation. Never ascend to sleep more than 300m above your previous night.' },
+                    { icon: '🩺', title: 'AMS Symptoms', body: 'Headache, nausea, dizziness, fatigue, or poor sleep above 2,500m. Never ignore symptoms — descend immediately if they worsen.' },
+                  ].map(c => (
+                    <div key={c.title} style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: '16px', padding: '20px' }}>
+                      <p style={{ fontSize: '22px', marginBottom: '10px' }}>{c.icon}</p>
+                      <p style={{ fontSize: '13px', fontWeight: 700, color: '#1A3A2A', marginBottom: '6px' }}>{c.title}</p>
+                      <p style={{ fontSize: '13px', color: '#666', lineHeight: 1.7 }}>{c.body}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
+
+          {/* Safety Check-In widget */}
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: '20px', padding: isMobile ? '20px' : '28px 32px', marginBottom: '40px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', marginBottom: '16px' }}>
+              <div>
+                <h3 style={{ fontFamily: 'Fraunces, serif', fontSize: '18px', fontWeight: 700, color: '#1A3A2A', marginBottom: '4px' }}>Safety Check-In</h3>
+                <p style={{ fontSize: '13px', color: '#888', lineHeight: 1.6 }}>Register your trek with an emergency contact. They'll have your itinerary dates in case you don't return on time.</p>
+              </div>
+              {activeCheckin && !activeCheckin.checked_in && (
+                <span style={{ fontSize: '11px', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', backgroundColor: '#EAF3DE', color: '#2E7D32', flexShrink: 0 }}>Active</span>
+              )}
+              {activeCheckin?.checked_in && (
+                <span style={{ fontSize: '11px', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', backgroundColor: '#E8F5E9', color: '#2E7D32', flexShrink: 0 }}>✓ Checked in safe</span>
+              )}
+            </div>
+
+            {!user ? (
+              <Link to="/login" style={{ fontSize: '14px', color: '#C4973A', textDecoration: 'none', fontWeight: 600 }}>Sign in to register a check-in →</Link>
+            ) : activeCheckin ? (
+              <div>
+                <div style={{ backgroundColor: '#F7FAF7', border: '1px solid #C8E6C9', borderRadius: '12px', padding: '16px 20px', marginBottom: '12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '8px 24px' }}>
+                    <div><p style={{ fontSize: '11px', color: '#888' }}>Emergency contact</p><p style={{ fontSize: '13px', fontWeight: 600, color: '#1A3A2A' }}>{activeCheckin.emergency_name}</p></div>
+                    <div><p style={{ fontSize: '11px', color: '#888' }}>Email</p><p style={{ fontSize: '13px', fontWeight: 600, color: '#1A3A2A' }}>{activeCheckin.emergency_email}</p></div>
+                    <div><p style={{ fontSize: '11px', color: '#888' }}>Trek start</p><p style={{ fontSize: '13px', fontWeight: 600, color: '#1A3A2A' }}>{new Date(activeCheckin.start_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p></div>
+                    <div><p style={{ fontSize: '11px', color: '#888' }}>Expected return</p><p style={{ fontSize: '13px', fontWeight: 600, color: activeCheckin.is_overdue ? '#BF360C' : '#1A3A2A' }}>{new Date(activeCheckin.expected_return + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}{activeCheckin.is_overdue ? ' — OVERDUE' : ''}</p></div>
+                  </div>
+                </div>
+                {!activeCheckin.checked_in && (
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button onClick={() => handleCheckinSafe(activeCheckin.id)}
+                      style={{ padding: '10px 20px', borderRadius: '10px', border: 'none', backgroundColor: '#1A3A2A', color: '#FFF', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+                      ✓ I'm back safe
+                    </button>
+                    <button onClick={() => handleDeleteCheckin(activeCheckin.id)}
+                      style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid #FFCCBC', backgroundColor: '#FFF5F3', color: '#BF360C', fontSize: '13px', cursor: 'pointer' }}>
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : showCheckinForm ? (
+              <form onSubmit={handleCheckinSubmit}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                  {[
+                    { key: 'emergency_name',  label: 'Emergency contact name', type: 'text',  required: true },
+                    { key: 'emergency_email', label: 'Their email address',     type: 'email', required: true },
+                    { key: 'emergency_phone', label: 'Their phone (optional)',  type: 'tel',   required: false },
+                    { key: 'start_date',      label: 'Trek start date',         type: 'date',  required: true },
+                    { key: 'expected_return', label: 'Expected return date',    type: 'date',  required: true },
+                  ].map(f => (
+                    <div key={f.key}>
+                      <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '4px' }}>{f.label}</label>
+                      <input
+                        type={f.type} required={f.required}
+                        value={checkinForm[f.key]}
+                        onChange={e => setCheckinForm(p => ({ ...p, [f.key]: e.target.value }))}
+                        min={f.type === 'date' ? new Date().toISOString().slice(0, 10) : undefined}
+                        style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', border: '1px solid #DDD', fontSize: '13px', fontFamily: 'DM Sans, sans-serif', outline: 'none', boxSizing: 'border-box' }}
+                        onFocus={e => e.target.style.borderColor = '#C4973A'}
+                        onBlur={e  => e.target.style.borderColor = '#DDD'}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                  <button type="submit" disabled={checkinSaving} style={{ padding: '10px 20px', borderRadius: '10px', border: 'none', backgroundColor: checkinSaving ? '#9FB89F' : '#1A3A2A', color: '#FFF', fontSize: '13px', fontWeight: 600, cursor: checkinSaving ? 'not-allowed' : 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+                    {checkinSaving ? 'Saving…' : 'Register check-in'}
+                  </button>
+                  <button type="button" onClick={() => setShowCheckinForm(false)} style={{ padding: '10px 16px', borderRadius: '10px', border: '1px solid #DDD', backgroundColor: '#FFF', fontSize: '13px', cursor: 'pointer' }}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <button onClick={() => setShowCheckinForm(true)} style={{ padding: '10px 20px', borderRadius: '10px', border: 'none', backgroundColor: '#1A3A2A', color: '#FFF', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+                Register safety check-in
+              </button>
+            )}
+          </div>
+
+          {/* Emergency contacts */}
+          <h3 style={{ fontFamily: 'Fraunces, serif', fontSize: '22px', fontWeight: 700, color: '#1A3A2A', marginBottom: '20px' }}>Emergency Contacts</h3>
+          <p style={{ fontSize: '14px', color: '#888', marginBottom: '24px', lineHeight: 1.7 }}>
+            Save these numbers before you start. Cell coverage is limited above 4,000m.
+          </p>
+          {(() => {
+            const CONTACTS = [
+              { icon: '🚁', title: 'Helicopter Rescue', org: 'Fishtail Air / Altitude Air', number: '+977 1 4412 888', note: 'Requires rescue insurance. Arrange via your trekking agency or teahouse.' },
+              { icon: '🏥', title: 'Himalayan Rescue Association', org: 'HRA Aid Posts (Pheriche / Manang)', number: '+977 1 4440 292', note: 'Free consultation at HRA aid posts on the EBC and Annapurna routes.' },
+              { icon: '🚔', title: 'Nepal Police Emergency', org: 'National Emergency', number: '100', note: 'Works from any phone. Tourist Police hotline: +977 1 4247041.' },
+              { icon: '🏔', title: 'Nepal Tourism Board', org: 'Tourist Helpline 24/7', number: '1136', note: 'For missing trekkers, permit issues, and emergency coordination.' },
+              { icon: '💊', title: 'CIWEC Hospital', org: 'Kathmandu — travel medicine', number: '+977 1 4424 111', note: 'Specialist altitude sickness treatment and evacuation advice.' },
+            ]
+            const regionContacts = {
+              'Khumbu':    { icon: '📡', title: 'Khumbu Climbing Center', org: 'Namche Bazaar', number: '+977 38 540 246', note: 'Local rescue coordination for the EBC region.' },
+              'Annapurna': { icon: '📡', title: 'Annapurna Conservation Area', org: 'ACAP Office, Pokhara', number: '+977 61 690 233', note: 'Permit checks and emergency coordination for the Annapurna circuit.' },
+              'Langtang':  { icon: '📡', title: 'Langtang National Park', org: 'Park HQ, Dhunche', number: '+977 1 4220 972', note: 'Missing trekker reports and rescue coordination.' },
+              'Everest':   { icon: '📡', title: 'Khumbu Region HQ', org: 'Namche Bazaar', number: '+977 38 540 246', note: 'Local rescue coordination for the Everest region.' },
+            }
+            const extra = regionContacts[trail.region]
+            const allContacts = extra ? [extra, ...CONTACTS] : CONTACTS
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px' }}>
+                {allContacts.map(c => (
+                  <div key={c.title} style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: '16px', padding: '20px 22px', display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                    <div style={{ fontSize: '24px', flexShrink: 0, marginTop: '2px' }}>{c.icon}</div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: '13px', fontWeight: 700, color: '#1A3A2A', marginBottom: '2px' }}>{c.title}</p>
+                      <p style={{ fontSize: '11px', color: '#AAA', marginBottom: '6px' }}>{c.org}</p>
+                      <a href={`tel:${c.number}`} style={{ fontSize: '16px', fontWeight: 700, color: '#C4973A', textDecoration: 'none', fontFamily: 'Fraunces, serif', display: 'block', marginBottom: '6px' }}>
+                        {c.number}
+                      </a>
+                      <p style={{ fontSize: '12px', color: '#666', lineHeight: 1.6 }}>{c.note}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
+        </section>
+
+        <div style={{ borderTop: '1px solid #E8E5E0' }} />
+
         {/* ── TRAIL CONDITIONS ──────────────────────────────── */}
         <section id="conditions" style={{ padding: '72px 0' }}>
           <p style={{ fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C4973A', marginBottom: '12px' }}>✦ Community Reports</p>
@@ -1183,53 +1431,6 @@ export default function TrailDetail() {
                     </div>
                   )
                 })}
-              </div>
-            )
-          })()}
-        </section>
-
-        <div style={{ borderTop: '1px solid #E8E5E0' }} />
-
-        {/* ── EMERGENCY CONTACTS ────────────────────────────── */}
-        <section style={{ padding: '72px 0' }}>
-          <p style={{ fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C4973A', marginBottom: '12px' }}>✦ Safety</p>
-          <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: isMobile ? '28px' : '40px', fontWeight: 700, color: '#1A3A2A', marginBottom: '12px' }}>
-            Emergency Contacts
-          </h2>
-          <p style={{ fontSize: '15px', color: '#888', marginBottom: '36px', lineHeight: 1.7 }}>
-            Save these numbers before you start. Cell coverage is limited above 4,000m — download offline maps and share your itinerary with someone at home.
-          </p>
-          {(() => {
-            const CONTACTS = [
-              { icon: '🚁', title: 'Helicopter Rescue', org: 'Fishtail Air / Altitude Air', number: '+977 1 4412 888', note: 'Requires rescue insurance. Arrange via your trekking agency or teahouse.' },
-              { icon: '🏥', title: 'Himalayan Rescue Association', org: 'HRA Aid Posts (Pheriche / Manang)', number: '+977 1 4440 292', note: 'Free consultation at HRA aid posts on the EBC and Annapurna routes.' },
-              { icon: '🚔', title: 'Nepal Police Emergency', org: 'National Emergency', number: '100', note: 'Works from any phone. Tourist Police hotline: +977 1 4247041.' },
-              { icon: '🏔', title: 'Nepal Tourism Board', org: 'Tourist Helpline 24/7', number: '1136', note: 'For missing trekkers, permit issues, and emergency coordination.' },
-              { icon: '💊', title: 'CIWEC Hospital', org: 'Kathmandu — travel medicine', number: '+977 1 4424 111', note: 'Specialist altitude sickness treatment and evacuation advice.' },
-            ]
-            const regionContacts = {
-              'Khumbu':          { icon: '📡', title: 'Khumbu Climbing Center', org: 'Namche Bazaar', number: '+977 38 540 246', note: 'Local rescue coordination for the EBC region.' },
-              'Annapurna':       { icon: '📡', title: 'Annapurna Conservation Area', org: 'ACAP Office, Pokhara', number: '+977 61 690 233', note: 'Permit checks and emergency coordination for the Annapurna circuit.' },
-              'Langtang':        { icon: '📡', title: 'Langtang National Park', org: 'Park HQ, Dhunche', number: '+977 1 4220 972', note: 'Missing trekker reports and rescue coordination.' },
-              'Everest':         { icon: '📡', title: 'Khumbu Region HQ', org: 'Namche Bazaar', number: '+977 38 540 246', note: 'Local rescue coordination for the Everest region.' },
-            }
-            const extra = regionContacts[trail.region]
-            const allContacts = extra ? [extra, ...CONTACTS] : CONTACTS
-            return (
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px' }}>
-                {allContacts.map(c => (
-                  <div key={c.title} style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: '16px', padding: '20px 22px', display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
-                    <div style={{ fontSize: '24px', flexShrink: 0, marginTop: '2px' }}>{c.icon}</div>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: '13px', fontWeight: 700, color: '#1A3A2A', marginBottom: '2px' }}>{c.title}</p>
-                      <p style={{ fontSize: '11px', color: '#AAA', marginBottom: '6px' }}>{c.org}</p>
-                      <a href={`tel:${c.number}`} style={{ fontSize: '16px', fontWeight: 700, color: '#C4973A', textDecoration: 'none', fontFamily: 'Fraunces, serif', display: 'block', marginBottom: '6px' }}>
-                        {c.number}
-                      </a>
-                      <p style={{ fontSize: '12px', color: '#666', lineHeight: 1.6 }}>{c.note}</p>
-                    </div>
-                  </div>
-                ))}
               </div>
             )
           })()}

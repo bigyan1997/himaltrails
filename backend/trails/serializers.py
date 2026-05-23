@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Trail, Itinerary, Permit, Teahouse
+from .models import Trail, Itinerary, Permit, Teahouse, Guide
 
 
 class ItinerarySerializer(serializers.ModelSerializer):
@@ -99,3 +99,29 @@ class TrailDetailSerializer(serializers.ModelSerializer):
         if val is not None:
             return val
         return obj.reviews.count()
+
+
+class GuideSerializer(serializers.ModelSerializer):
+    specialties_list = serializers.SerializerMethodField()
+    languages_list   = serializers.SerializerMethodField()
+    trail_slugs      = serializers.SerializerMethodField()
+
+    class Meta:
+        model  = Guide
+        fields = [
+            'id', 'name', 'license_number', 'experience_years',
+            'specialties', 'specialties_list',
+            'languages', 'languages_list',
+            'trail_slugs',
+            'price_per_day_usd', 'contact_phone', 'contact_email',
+            'photo_url', 'bio', 'rating', 'review_count', 'region',
+        ]
+
+    def get_specialties_list(self, obj):
+        return [s.strip() for s in obj.specialties.split(',') if s.strip()]
+
+    def get_languages_list(self, obj):
+        return [lang.strip() for lang in obj.languages.split(',') if lang.strip()]
+
+    def get_trail_slugs(self, obj):
+        return list(obj.trails.values_list('slug', flat=True))

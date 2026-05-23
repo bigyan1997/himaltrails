@@ -1,8 +1,8 @@
 from django.db.models import Avg, Count
 from rest_framework import generics
 from rest_framework.permissions import AllowAny
-from .models import Trail
-from .serializers import TrailListSerializer, TrailDetailSerializer
+from .models import Trail, Guide
+from .serializers import TrailListSerializer, TrailDetailSerializer, GuideSerializer
 
 
 def _annotated_list_qs(queryset):
@@ -49,3 +49,16 @@ class TrailDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
     queryset           = Trail.objects.filter(is_published=True).prefetch_related('reviews', 'itinerary', 'permits', 'teahouses')
     lookup_field       = 'slug'
+
+
+class GuideListView(generics.ListAPIView):
+    """Returns all active guides, optionally filtered by region."""
+    serializer_class   = GuideSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        qs     = Guide.objects.filter(is_active=True).prefetch_related('trails')
+        region = self.request.query_params.get('region')
+        if region:
+            qs = qs.filter(region__icontains=region)
+        return qs

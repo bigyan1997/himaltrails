@@ -81,4 +81,18 @@ export const deleteTripPlan  = (trail_slug) => api.delete(`/planner/plans/${trai
 export const getConditionReports   = (trail_slug)       => api.get(`/planner/conditions/${trail_slug}/`);
 export const submitConditionReport = (trail_slug, data) => api.post(`/planner/conditions/${trail_slug}/`, data);
 
+// Planner — safety check-ins
+export const getSafetyCheckIns    = ()         => api.get('/planner/safety/');
+export const createSafetyCheckIn  = (data)     => api.post('/planner/safety/', data);
+export const checkinSafe          = (id)       => api.patch(`/planner/safety/${id}/`, { checked_in: true });
+export const deleteSafetyCheckIn  = (id)       => api.delete(`/planner/safety/${id}/`);
+
+// Planner — user permits
+export const getUserPermits   = ()       => api.get('/planner/permits/');
+export const addUserPermit    = (data)   => api.post('/planner/permits/', data);
+export const deleteUserPermit = (id)     => api.delete(`/planner/permits/${id}/`);
+
+// Guides directory
+export const getGuides = (region) => api.get('/guides/', { params: region ? { region } : {} });
+
 export default api;

@@ -114,3 +114,41 @@ class TripPlan(models.Model):
 
     def __str__(self):
         return f'{self.user.email} plans {self.trail.name} from {self.start_date}'
+
+
+class SafetyCheckIn(models.Model):
+    user             = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='safety_checkins')
+    trail            = models.ForeignKey('trails.Trail', on_delete=models.CASCADE, related_name='safety_checkins')
+    emergency_name   = models.CharField(max_length=200)
+    emergency_email  = models.EmailField()
+    emergency_phone  = models.CharField(max_length=30, blank=True)
+    start_date       = models.DateField()
+    expected_return  = models.DateField()
+    checked_in       = models.BooleanField(default=False)
+    checked_in_at    = models.DateTimeField(null=True, blank=True)
+    notes            = models.TextField(blank=True)
+    created_at       = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.user.email} → {self.trail.name} due {self.expected_return}'
+
+
+class UserPermit(models.Model):
+    user          = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='user_permits')
+    trail         = models.ForeignKey('trails.Trail', on_delete=models.CASCADE, related_name='user_permits', null=True, blank=True)
+    permit_name   = models.CharField(max_length=200)
+    permit_number = models.CharField(max_length=100, blank=True)
+    permit_type   = models.CharField(max_length=50)
+    issued_date   = models.DateField()
+    expiry_date   = models.DateField()
+    notes         = models.TextField(blank=True)
+    created_at    = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-issued_date']
+
+    def __str__(self):
+        return f'{self.user.email}: {self.permit_name}'

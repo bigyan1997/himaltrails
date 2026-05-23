@@ -7,6 +7,8 @@ import {
   getPackingList, addPackingItem, updatePackingItem, deletePackingItem,
   getCompletedTrails,
   getTripPlans, saveTripPlan, deleteTripPlan,
+  getSafetyCheckIns, checkinSafe, deleteSafetyCheckIn,
+  getUserPermits, addUserPermit, deleteUserPermit,
 } from '../services/api'
 import Navbar from '../components/Navbar'
 import useMobile from '../hooks/useMobile'
@@ -137,6 +139,11 @@ export default function Dashboard() {
   const [planningSlug,   setPlanningSlug]   = useState(null)
   const [planDate,       setPlanDate]       = useState('')
   const [planSaving,     setPlanSaving]     = useState(false)
+  const [safetyCheckins, setSafetyCheckins] = useState([])
+  const [userPermits,    setUserPermits]    = useState([])
+  const [permitForm,     setPermitForm]     = useState({ permit_name: '', permit_number: '', permit_type: 'tims', issued_date: '', expiry_date: '', trail_slug: '', notes: '' })
+  const [permitSaving,   setPermitSaving]   = useState(false)
+  const [showPermitForm, setShowPermitForm] = useState(false)
 
   useEffect(() => {
     if (!authLoading && !user) navigate('/login', { state: { from: '/dashboard' } })
@@ -148,6 +155,8 @@ export default function Dashboard() {
     getPackingList().then(r => setPackingItems(r.data)).catch(() => {})
     getCompletedTrails().then(r => setCompletedTrails(r.data)).catch(() => {})
     getTripPlans().then(r => setTripPlans(r.data)).catch(() => {})
+    getSafetyCheckIns().then(r => setSafetyCheckins(r.data)).catch(() => {})
+    getUserPermits().then(r => setUserPermits(r.data)).catch(() => {})
   }, [user])
 
   const handleUnsave = async (slug) => {
@@ -226,6 +235,41 @@ export default function Dashboard() {
     } catch (_) {}
   }
 
+  const handleCheckinSafe = async (id) => {
+    try {
+      const res = await checkinSafe(id)
+      setSafetyCheckins(cs => cs.map(c => c.id === id ? res.data : c))
+    } catch (_) {}
+  }
+
+  const handleDeleteCheckin = async (id) => {
+    try {
+      await deleteSafetyCheckIn(id)
+      setSafetyCheckins(cs => cs.filter(c => c.id !== id))
+    } catch (_) {}
+  }
+
+  const handleAddPermit = async (e) => {
+    e.preventDefault()
+    setPermitSaving(true)
+    try {
+      const res = await addUserPermit(permitForm)
+      setUserPermits(ps => [...ps, res.data])
+      setPermitForm({ permit_name: '', permit_number: '', permit_type: 'tims', issued_date: '', expiry_date: '', trail_slug: '', notes: '' })
+      setShowPermitForm(false)
+    } catch (_) {
+    } finally {
+      setPermitSaving(false)
+    }
+  }
+
+  const handleDeletePermit = async (id) => {
+    try {
+      await deleteUserPermit(id)
+      setUserPermits(ps => ps.filter(p => p.id !== id))
+    } catch (_) {}
+  }
+
   const groupedPacking = CATEGORIES.reduce((acc, cat) => {
     const items = packingItems.filter(i => i.category === cat)
     if (items.length) acc[cat] = items
@@ -275,6 +319,8 @@ export default function Dashboard() {
           <button style={tabStyle('planned')}   onClick={() => setTab('planned')}>Trip Plans</button>
           <button style={tabStyle('completed')} onClick={() => setTab('completed')}>Completed</button>
           <button style={tabStyle('packing')}   onClick={() => setTab('packing')}>Packing List</button>
+          <button style={tabStyle('permits')}   onClick={() => setTab('permits')}>My Permits</button>
+          <button style={tabStyle('safety')}    onClick={() => setTab('safety')}>Safety</button>
         </div>
 
         {/* ── Saved Trails tab ── */}
@@ -576,6 +622,159 @@ export default function Dashboard() {
             )}
           </div>
         )}
+
+        {/* ── My Permits tab ── */}
+        {tab === 'permits' && (
+          <div style={{ maxWidth: '760px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+              <p style={{ fontSize: '14px', color: '#888' }}>{userPermits.length} permit{userPermits.length !== 1 ? 's' : ''} stored</p>
+              <button onClick={() => setShowPermitForm(v => !v)}
+                style={{ padding: '10px 20px', borderRadius: '24px', border: 'none', backgroundColor: '#1A3A2A', color: '#FFF', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+                {showPermitForm ? 'Cancel' : '+ Add permit'}
+              </button>
+            </div>
+
+            {showPermitForm && (
+              <form onSubmit={handleAddPermit} style={{ backgroundColor: '#FFFFFF', border: '1px solid #C8E6C9', borderRadius: '20px', padding: '24px', marginBottom: '24px' }}>
+                <p style={{ fontSize: '13px', fontWeight: 700, color: '#1A3A2A', marginBottom: '16px' }}>New permit</p>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                  {[
+                    { key: 'permit_name',   label: 'Permit name',   type: 'text', required: true  },
+                    { key: 'permit_number', label: 'Permit number',  type: 'text', required: false },
+                    { key: 'issued_date',   label: 'Issue date',     type: 'date', required: true  },
+                    { key: 'expiry_date',   label: 'Expiry date',    type: 'date', required: true  },
+                  ].map(f => (
+                    <div key={f.key}>
+                      <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '4px' }}>{f.label}</label>
+                      <input type={f.type} required={f.required} value={permitForm[f.key]}
+                        onChange={e => setPermitForm(p => ({ ...p, [f.key]: e.target.value }))}
+                        style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', border: '1px solid #DDD', fontSize: '13px', fontFamily: 'DM Sans, sans-serif', outline: 'none', boxSizing: 'border-box' }}
+                        onFocus={e => e.target.style.borderColor = '#C4973A'}
+                        onBlur={e  => e.target.style.borderColor = '#DDD'} />
+                    </div>
+                  ))}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '4px' }}>Permit type</label>
+                    <select value={permitForm.permit_type} onChange={e => setPermitForm(p => ({ ...p, permit_type: e.target.value }))}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', border: '1px solid #DDD', fontSize: '13px', fontFamily: 'DM Sans, sans-serif', outline: 'none', boxSizing: 'border-box', backgroundColor: '#FFF', cursor: 'pointer' }}>
+                      {[['tims','TIMS Card'],['national_park','National Park'],['conservation','Conservation Area'],['restricted','Restricted Area'],['municipal','Municipality']].map(([v,l]) => (
+                        <option key={v} value={v}>{l}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '4px' }}>Trail (optional)</label>
+                    <select value={permitForm.trail_slug} onChange={e => setPermitForm(p => ({ ...p, trail_slug: e.target.value }))}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', border: '1px solid #DDD', fontSize: '13px', fontFamily: 'DM Sans, sans-serif', outline: 'none', boxSizing: 'border-box', backgroundColor: '#FFF', cursor: 'pointer' }}>
+                      <option value="">No specific trail</option>
+                      {savedTrails.map(s => <option key={s.trail.slug} value={s.trail.slug}>{s.trail.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <button type="submit" disabled={permitSaving}
+                  style={{ padding: '10px 24px', borderRadius: '10px', border: 'none', backgroundColor: permitSaving ? '#9FB89F' : '#1A3A2A', color: '#FFF', fontSize: '13px', fontWeight: 600, cursor: permitSaving ? 'not-allowed' : 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+                  {permitSaving ? 'Saving…' : 'Save permit'}
+                </button>
+              </form>
+            )}
+
+            {userPermits.length === 0 && !showPermitForm ? (
+              <div style={{ textAlign: 'center', padding: '80px 24px', backgroundColor: '#FFFFFF', borderRadius: '20px', border: '1px solid #E8E5E0' }}>
+                <p style={{ fontSize: '32px', marginBottom: '12px' }}>📄</p>
+                <p style={{ fontSize: '16px', fontWeight: 600, color: '#1A3A2A', marginBottom: '8px' }}>No permits stored yet</p>
+                <p style={{ fontSize: '14px', color: '#999' }}>Store your TIMS card, national park entry, and conservation permits here to keep them in one place.</p>
+              </div>
+            ) : userPermits.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {userPermits.map(p => {
+                  const expired = p.is_expired
+                  const expDate = new Date(p.expiry_date + 'T00:00:00')
+                  const daysLeft = Math.ceil((expDate - new Date()) / 86400000)
+                  return (
+                    <div key={p.id} style={{ backgroundColor: '#FFFFFF', border: `1px solid ${expired ? '#FFCCBC' : '#E8E5E0'}`, borderRadius: '16px', padding: '18px 22px', display: 'flex', gap: '16px', alignItems: 'flex-start', opacity: expired ? 0.75 : 1 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                          <p style={{ fontSize: '15px', fontWeight: 700, color: '#1A3A2A' }}>{p.permit_name}</p>
+                          {expired
+                            ? <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', backgroundColor: '#FBE9E7', color: '#BF360C' }}>EXPIRED</span>
+                            : daysLeft <= 30
+                            ? <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', backgroundColor: '#FFF8E1', color: '#F57F17' }}>Expires in {daysLeft}d</span>
+                            : <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', backgroundColor: '#E8F5E9', color: '#2E7D32' }}>Valid</span>
+                          }
+                        </div>
+                        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                          {p.permit_number && <p style={{ fontSize: '12px', color: '#888' }}>#{p.permit_number}</p>}
+                          <p style={{ fontSize: '12px', color: '#888' }}>Issued {new Date(p.issued_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                          <p style={{ fontSize: '12px', color: expired ? '#BF360C' : '#888' }}>Expires {expDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                          {p.trail_name && <p style={{ fontSize: '12px', color: '#C4973A', fontWeight: 600 }}>{p.trail_name}</p>}
+                        </div>
+                      </div>
+                      <button onClick={() => handleDeletePermit(p.id)}
+                        style={{ padding: '6px 10px', borderRadius: '8px', border: '1px solid #FFCCBC', backgroundColor: '#FFF5F3', color: '#BF360C', fontSize: '12px', cursor: 'pointer', flexShrink: 0 }}>✕</button>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        {/* ── Safety tab ── */}
+        {tab === 'safety' && (
+          <div style={{ maxWidth: '760px' }}>
+            <p style={{ fontSize: '14px', color: '#888', marginBottom: '32px' }}>
+              Active safety check-ins register your trek dates and emergency contact. Mark yourself as safe when you return.
+            </p>
+            {safetyCheckins.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '80px 24px', backgroundColor: '#FFFFFF', borderRadius: '20px', border: '1px solid #E8E5E0' }}>
+                <p style={{ fontSize: '32px', marginBottom: '12px' }}>🛡️</p>
+                <p style={{ fontSize: '16px', fontWeight: 600, color: '#1A3A2A', marginBottom: '8px' }}>No active check-ins</p>
+                <p style={{ fontSize: '14px', color: '#999', marginBottom: '24px' }}>Register a safety check-in from any trail page before you depart.</p>
+                <Link to="/trails" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: '24px', backgroundColor: '#1A3A2A', color: '#FFFFFF', textDecoration: 'none', fontSize: '14px', fontWeight: 600 }}>Browse Trails</Link>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {safetyCheckins.map(c => {
+                  const overdue = c.is_overdue
+                  return (
+                    <div key={c.id} style={{ backgroundColor: '#FFFFFF', border: `1px solid ${overdue ? '#FFCCBC' : c.checked_in ? '#C8E6C9' : '#E8E5E0'}`, borderRadius: '20px', padding: isMobile ? '18px' : '22px 28px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px', gap: '12px', flexWrap: 'wrap' }}>
+                        <div>
+                          <p style={{ fontSize: '11px', color: '#C4973A', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, marginBottom: '4px' }}>{c.trail_name}</p>
+                          <p style={{ fontSize: '13px', color: '#555' }}>Emergency contact: <strong style={{ color: '#1A3A2A' }}>{c.emergency_name}</strong> · {c.emergency_email}</p>
+                        </div>
+                        {c.checked_in
+                          ? <span style={{ fontSize: '11px', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', backgroundColor: '#E8F5E9', color: '#2E7D32', flexShrink: 0 }}>✓ Safe</span>
+                          : overdue
+                          ? <span style={{ fontSize: '11px', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', backgroundColor: '#FBE9E7', color: '#BF360C', flexShrink: 0 }}>OVERDUE</span>
+                          : <span style={{ fontSize: '11px', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', backgroundColor: '#EAF3DE', color: '#2E7D32', flexShrink: 0 }}>Active</span>
+                        }
+                      </div>
+                      <div style={{ display: 'flex', gap: '20px', marginBottom: '14px', flexWrap: 'wrap' }}>
+                        <div><p style={{ fontSize: '11px', color: '#AAA' }}>Trek start</p><p style={{ fontSize: '13px', fontWeight: 600, color: '#1A3A2A' }}>{new Date(c.start_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p></div>
+                        <div><p style={{ fontSize: '11px', color: '#AAA' }}>Expected return</p><p style={{ fontSize: '13px', fontWeight: 600, color: overdue ? '#BF360C' : '#1A3A2A' }}>{new Date(c.expected_return + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p></div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <Link to={`/trails/${c.trail_slug}`} style={{ padding: '8px 16px', borderRadius: '10px', backgroundColor: '#F0EDE8', color: '#1A3A2A', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>View trail</Link>
+                        {!c.checked_in && (
+                          <button onClick={() => handleCheckinSafe(c.id)}
+                            style={{ padding: '8px 16px', borderRadius: '10px', border: 'none', backgroundColor: '#1A3A2A', color: '#FFF', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+                            ✓ I'm back safe
+                          </button>
+                        )}
+                        <button onClick={() => handleDeleteCheckin(c.id)}
+                          style={{ padding: '8px 12px', borderRadius: '10px', border: '1px solid #FFCCBC', backgroundColor: '#FFF5F3', color: '#BF360C', fontSize: '13px', cursor: 'pointer' }}>
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   )

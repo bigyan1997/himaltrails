@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from trails.serializers import TrailListSerializer
-from .models import SavedTrail, TripNote, PackingItem, Review, CompletedTrail, TripPlan, ConditionReport
+from .models import SavedTrail, TripNote, PackingItem, Review, CompletedTrail, TripPlan, ConditionReport, SafetyCheckIn, UserPermit
 
 
 class SavedTrailSerializer(serializers.ModelSerializer):
@@ -86,3 +86,42 @@ class TripPlanSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         validated_data.pop('trail_slug', None)
         return super().update(instance, validated_data)
+
+
+class SafetyCheckInSerializer(serializers.ModelSerializer):
+    trail_name = serializers.CharField(source='trail.name', read_only=True)
+    trail_slug = serializers.CharField(source='trail.slug', read_only=True)
+    is_overdue = serializers.SerializerMethodField()
+
+    class Meta:
+        model  = SafetyCheckIn
+        fields = [
+            'id', 'trail_name', 'trail_slug',
+            'emergency_name', 'emergency_email', 'emergency_phone',
+            'start_date', 'expected_return',
+            'checked_in', 'checked_in_at', 'notes',
+            'is_overdue', 'created_at',
+        ]
+
+    def get_is_overdue(self, obj):
+        from datetime import date
+        return not obj.checked_in and obj.expected_return < date.today()
+
+
+class UserPermitSerializer(serializers.ModelSerializer):
+    trail_name = serializers.CharField(source='trail.name', read_only=True)
+    trail_slug = serializers.CharField(source='trail.slug', read_only=True)
+    is_expired = serializers.SerializerMethodField()
+
+    class Meta:
+        model  = UserPermit
+        fields = [
+            'id', 'trail_name', 'trail_slug',
+            'permit_name', 'permit_number', 'permit_type',
+            'issued_date', 'expiry_date', 'notes',
+            'is_expired', 'created_at',
+        ]
+
+    def get_is_expired(self, obj):
+        from datetime import date
+        return obj.expiry_date < date.today()
