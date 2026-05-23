@@ -46,12 +46,18 @@ class TrailListSerializer(serializers.ModelSerializer):
         ]
 
     def get_avg_rating(self, obj):
-        reviews = obj.reviews.all()
+        val = getattr(obj, '_avg_rating', None)
+        if val is not None:
+            return round(float(val), 1)
+        reviews = list(obj.reviews.all())
         if not reviews:
             return None
         return round(sum(r.rating for r in reviews) / len(reviews), 1)
 
     def get_review_count(self, obj):
+        val = getattr(obj, '_review_count', None)
+        if val is not None:
+            return val
         return obj.reviews.count()
 
 
@@ -80,10 +86,16 @@ class TrailDetailSerializer(serializers.ModelSerializer):
         ]
 
     def get_avg_rating(self, obj):
-        reviews = obj.reviews.all()
+        val = getattr(obj, '_avg_rating', None)
+        if val is not None:
+            return round(float(val), 1)
+        reviews = list(obj.reviews.all())
         if not reviews:
             return None
         return round(sum(r.rating for r in reviews) / len(reviews), 1)
 
     def get_review_count(self, obj):
+        val = getattr(obj, '_review_count', None)
+        if val is not None:
+            return val
         return obj.reviews.count()

@@ -13,4 +13,5 @@ urlpatterns = [
     path('completed/<slug:trail_slug>/',         views.CompletedTrailDetailView.as_view()),
     path('plans/',                               views.TripPlansView.as_view()),
     path('plans/<slug:trail_slug>/',             views.TripPlanDetailView.as_view()),
+    path('conditions/<slug:trail_slug>/',        views.ConditionReportListView.as_view()),
 ]

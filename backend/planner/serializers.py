@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from trails.serializers import TrailListSerializer
-from .models import SavedTrail, TripNote, PackingItem, Review, CompletedTrail, TripPlan
+from .models import SavedTrail, TripNote, PackingItem, Review, CompletedTrail, TripPlan, ConditionReport
 
 
 class SavedTrailSerializer(serializers.ModelSerializer):
@@ -29,6 +29,7 @@ class PackingItemSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     author      = serializers.CharField(source='user.display_name', read_only=True)
     author_init = serializers.SerializerMethodField()
+    body        = serializers.CharField(allow_blank=True, max_length=2000, required=False)
 
     class Meta:
         model  = Review
@@ -47,6 +48,20 @@ class CompletedTrailSerializer(serializers.ModelSerializer):
         fields = ['id', 'trail', 'completed_at', 'notes', 'created_at']
 
 
+class ConditionReportSerializer(serializers.ModelSerializer):
+    author      = serializers.CharField(source='user.display_name', read_only=True)
+    author_init = serializers.SerializerMethodField()
+    description = serializers.CharField(allow_blank=True, max_length=1000, required=False)
+
+    class Meta:
+        model  = ConditionReport
+        fields = ['id', 'author', 'author_init', 'status', 'description', 'reported_at']
+
+    def get_author_init(self, obj):
+        name = obj.user.display_name or obj.user.email
+        return name[0].upper()
+
+
 class TripPlanSerializer(serializers.ModelSerializer):
     trail      = TrailListSerializer(read_only=True)
     trail_slug = serializers.CharField(write_only=True)
@@ -63,8 +78,9 @@ class TripPlanSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         from trails.models import Trail
+        from django.shortcuts import get_object_or_404
         slug  = validated_data.pop('trail_slug')
-        trail = Trail.objects.get(slug=slug)
+        trail = get_object_or_404(Trail, slug=slug)
         return TripPlan.objects.create(trail=trail, **validated_data)
 
     def update(self, instance, validated_data):

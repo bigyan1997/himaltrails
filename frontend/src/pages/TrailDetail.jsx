@@ -6,17 +6,19 @@ import {
   getReviews, submitReview, deleteReview,
   getCompletedTrails, markCompleted, unmarkCompleted,
   getTrails,
+  getConditionReports, submitConditionReport,
 } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 import Navbar from '../components/Navbar'
 import useMobile from '../hooks/useMobile'
 
 const SECTIONS = [
-  { id: 'overview',   label: 'Overview' },
-  { id: 'itinerary',  label: 'Itinerary' },
-  { id: 'permits',    label: 'Permits' },
-  { id: 'teahouses',  label: 'Teahouses' },
-  { id: 'reviews',    label: 'Reviews' },
+  { id: 'overview',    label: 'Overview' },
+  { id: 'itinerary',   label: 'Itinerary' },
+  { id: 'permits',     label: 'Permits' },
+  { id: 'teahouses',   label: 'Teahouses' },
+  { id: 'conditions',  label: 'Conditions' },
+  { id: 'reviews',     label: 'Reviews' },
 ]
 
 const PERMIT_TYPE_LABEL = {
@@ -86,6 +88,10 @@ export default function TrailDetail() {
   const [groupSize, setGroupSize]       = useState(1)
   const [currency, setCurrency]         = useState('USD')
   const [highlightedDay, setHighlightedDay] = useState(null)
+  const [conditionReports, setConditionReports] = useState([])
+  const [reportStatus, setReportStatus] = useState('open')
+  const [reportDesc, setReportDesc]     = useState('')
+  const [reportSaving, setReportSaving] = useState(false)
   const isMobile                        = useMobile()
   const scrolling                       = useRef(false)
 
@@ -107,6 +113,10 @@ export default function TrailDetail() {
 
   useEffect(() => {
     getReviews(slug).then(res => setReviews(res.data)).catch(() => {})
+  }, [slug])
+
+  useEffect(() => {
+    getConditionReports(slug).then(res => setConditionReports(res.data)).catch(() => {})
   }, [slug])
 
   useEffect(() => {
@@ -170,6 +180,20 @@ export default function TrailDetail() {
     setReviews(r => r.filter(x => x.id !== id))
   }
 
+  const handleConditionSubmit = async (e) => {
+    e.preventDefault()
+    if (!user) { navigate('/login', { state: { from: `/trails/${slug}` } }); return }
+    setReportSaving(true)
+    try {
+      await submitConditionReport(slug, { status: reportStatus, description: reportDesc })
+      const res = await getConditionReports(slug)
+      setConditionReports(res.data)
+      setReportDesc('')
+    } finally {
+      setReportSaving(false)
+    }
+  }
+
   const weatherIcon = code => {
     if (code === 0) return '☀️'
     if (code <= 3)  return '⛅'
@@ -199,7 +223,7 @@ export default function TrailDetail() {
     setActive(id)
     const el = document.getElementById(id)
     if (!el) return
-    const target = el.getBoundingClientRect().top + window.scrollY - NAVBAR_H - SECNAV_H - 24
+    const target = el.getBoundingClientRect().top + window.scrollY - SECNAV_H - 16
     const start  = window.scrollY
     const dist   = target - start
     const dur    = 900
@@ -433,7 +457,7 @@ export default function TrailDetail() {
       </div>
 
       {/* ── SECTION NAV ─────────────────────────────────────── */}
-      <div style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E8E5E0', position: 'sticky', top: `${NAVBAR_H}px`, zIndex: 40 }}>
+      <div style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E8E5E0', position: 'sticky', top: 0, zIndex: 101 }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto', padding: isMobile ? '0 4px' : '0 48px', display: 'flex', overflowX: isMobile ? 'auto' : undefined, WebkitOverflowScrolling: 'touch' }}>
           {SECTIONS.map(({ id, label }) => (
             <button key={id} onClick={() => scrollTo(id)} style={{
@@ -455,7 +479,7 @@ export default function TrailDetail() {
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: isMobile ? '0 20px 64px' : '0 48px 96px' }}>
 
         {/* ── OVERVIEW ──────────────────────────────────────── */}
-        <section id="overview" style={{ padding: '72px 0' }}>
+        <section id="overview" style={{ padding: '40px 0 72px' }}>
           <p style={{ fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C4973A', marginBottom: '12px' }}>✦ Overview</p>
           <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: '40px', fontWeight: 700, color: '#1A3A2A', marginBottom: '48px' }}>
             About this trek
@@ -526,7 +550,7 @@ export default function TrailDetail() {
                     if (el) {
                       scrollTo('itinerary')
                       setTimeout(() => {
-                        const top = el.getBoundingClientRect().top + window.scrollY - NAVBAR_H - SECNAV_H - 12
+                        const top = el.getBoundingClientRect().top + window.scrollY - SECNAV_H - 12
                         window.scrollTo({ top, behavior: 'smooth' })
                       }, 950)
                     }
@@ -1042,6 +1066,126 @@ export default function TrailDetail() {
               ))}
             </div>
           )}
+        </section>
+
+        <div style={{ borderTop: '1px solid #E8E5E0' }} />
+
+        {/* ── TRAIL CONDITIONS ──────────────────────────────── */}
+        <section id="conditions" style={{ padding: '72px 0' }}>
+          <p style={{ fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C4973A', marginBottom: '12px' }}>✦ Community Reports</p>
+          <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: isMobile ? '28px' : '40px', fontWeight: 700, color: '#1A3A2A', marginBottom: '12px' }}>
+            Trail Conditions
+          </h2>
+          <p style={{ fontSize: '15px', color: '#888', marginBottom: '36px', lineHeight: 1.7 }}>
+            Real-time updates from trekkers on the ground. Reports are shown newest first.
+          </p>
+
+          {/* Submit a report */}
+          {(() => {
+            const STATUS_OPTIONS = [
+              { value: 'open',    label: 'Open', color: '#2E7D32', bg: '#E8F5E9' },
+              { value: 'partial', label: 'Partial', color: '#F57F17', bg: '#FFF8E1' },
+              { value: 'closed',  label: 'Closed', color: '#BF360C', bg: '#FBE9E7' },
+              { value: 'unknown', label: 'Unknown', color: '#555', bg: '#F0EDE8' },
+            ]
+            return (
+              <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: '20px', padding: isMobile ? '20px' : '28px 32px', marginBottom: '32px' }}>
+                <h3 style={{ fontFamily: 'Fraunces, serif', fontSize: '17px', fontWeight: 700, color: '#1A3A2A', marginBottom: '16px' }}>
+                  {user ? 'Report current conditions' : 'Sign in to report conditions'}
+                </h3>
+                {user ? (
+                  <form onSubmit={handleConditionSubmit}>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                      {STATUS_OPTIONS.map(opt => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setReportStatus(opt.value)}
+                          style={{
+                            padding: '6px 18px', borderRadius: '20px', border: 'none', cursor: 'pointer',
+                            fontSize: '13px', fontWeight: 600, fontFamily: 'DM Sans, sans-serif',
+                            backgroundColor: reportStatus === opt.value ? opt.bg : '#F7F5F0',
+                            color: reportStatus === opt.value ? opt.color : '#AAA',
+                            outline: reportStatus === opt.value ? `2px solid ${opt.color}33` : 'none',
+                            transition: 'all 0.15s',
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                    <textarea
+                      value={reportDesc}
+                      onChange={e => setReportDesc(e.target.value)}
+                      placeholder="Describe current conditions — trail state, snow, bridge damage, crowds…"
+                      rows={3}
+                      maxLength={1000}
+                      style={{
+                        width: '100%', padding: '12px 14px', borderRadius: '12px',
+                        border: '1px solid #DDD', fontSize: '14px', fontFamily: 'DM Sans, sans-serif',
+                        resize: 'vertical', outline: 'none', boxSizing: 'border-box', lineHeight: 1.6,
+                      }}
+                      onFocus={e => e.target.style.borderColor = '#C4973A'}
+                      onBlur={e  => e.target.style.borderColor = '#DDD'}
+                    />
+                    <button type="submit" disabled={reportSaving} style={{
+                      marginTop: '12px', padding: '10px 24px', borderRadius: '10px', border: 'none',
+                      backgroundColor: reportSaving ? '#9FB89F' : '#1A3A2A', color: '#FFFFFF',
+                      fontSize: '14px', fontWeight: 600, fontFamily: 'DM Sans, sans-serif',
+                      cursor: reportSaving ? 'not-allowed' : 'pointer',
+                    }}>
+                      {reportSaving ? 'Submitting…' : 'Submit report'}
+                    </button>
+                  </form>
+                ) : (
+                  <a href="/login" style={{ fontSize: '14px', color: '#C4973A', textDecoration: 'none', fontWeight: 600 }}>Sign in →</a>
+                )}
+              </div>
+            )
+          })()}
+
+          {/* Report list */}
+          {(() => {
+            const STATUS_STYLE = {
+              open:    { label: 'Open',    color: '#2E7D32', bg: '#E8F5E9' },
+              partial: { label: 'Partial', color: '#F57F17', bg: '#FFF8E1' },
+              closed:  { label: 'Closed',  color: '#BF360C', bg: '#FBE9E7' },
+              unknown: { label: 'Unknown', color: '#555',    bg: '#F0EDE8' },
+            }
+            if (conditionReports.length === 0) return (
+              <p style={{ fontSize: '14px', color: '#BBB', textAlign: 'center', padding: '40px 0' }}>
+                No condition reports yet — be the first to report!
+              </p>
+            )
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {conditionReports.map(r => {
+                  const s = STATUS_STYLE[r.status] || STATUS_STYLE.unknown
+                  return (
+                    <div key={r.id} style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E5E0', borderRadius: '16px', padding: '18px 22px', display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                      <div style={{ width: '34px', height: '34px', borderRadius: '50%', backgroundColor: '#1A3A2A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: '#FFF', flexShrink: 0 }}>
+                        {r.author_init}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 600, color: '#1A3A2A' }}>{r.author}</span>
+                          <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 10px', borderRadius: '20px', backgroundColor: s.bg, color: s.color }}>
+                            {s.label}
+                          </span>
+                          <span style={{ fontSize: '11px', color: '#BBB', marginLeft: 'auto' }}>
+                            {new Date(r.reported_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                        </div>
+                        {r.description && (
+                          <p style={{ fontSize: '14px', color: '#555', lineHeight: 1.75, margin: 0 }}>{r.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })()}
         </section>
 
         <div style={{ borderTop: '1px solid #E8E5E0' }} />

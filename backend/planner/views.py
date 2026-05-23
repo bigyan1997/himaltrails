@@ -1,3 +1,4 @@
+from datetime import date as date_type
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
@@ -5,10 +6,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from trails.models import Trail
-from .models import SavedTrail, TripNote, PackingItem, Review, CompletedTrail, TripPlan
+from .models import SavedTrail, TripNote, PackingItem, Review, CompletedTrail, TripPlan, ConditionReport
 from .serializers import (
     SavedTrailSerializer, TripNoteSerializer, PackingItemSerializer,
     ReviewSerializer, CompletedTrailSerializer, TripPlanSerializer,
+    ConditionReportSerializer,
 )
 
 
@@ -127,10 +129,19 @@ class CompletedTrailsView(APIView):
     def post(self, request):
         slug  = request.data.get('trail_slug')
         trail = get_object_or_404(Trail, slug=slug)
+
+        completed_at_raw = request.data.get('completed_at')
+        if not completed_at_raw:
+            return Response({'error': 'completed_at is required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            date_type.fromisoformat(str(completed_at_raw))
+        except ValueError:
+            return Response({'error': 'completed_at must be a valid date (YYYY-MM-DD)'}, status=status.HTTP_400_BAD_REQUEST)
+
         obj, created = CompletedTrail.objects.update_or_create(
             user=request.user, trail=trail,
             defaults={
-                'completed_at': request.data.get('completed_at'),
+                'completed_at': completed_at_raw,
                 'notes':        request.data.get('notes', ''),
             }
         )
@@ -146,6 +157,31 @@ class CompletedTrailDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+# ── Condition Reports ──────────────────────────────────────────────────────────
+
+VALID_CONDITION_STATUSES = {'open', 'partial', 'closed', 'unknown'}
+
+class ConditionReportListView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request, trail_slug):
+        trail   = get_object_or_404(Trail, slug=trail_slug)
+        reports = ConditionReport.objects.filter(trail=trail).select_related('user')[:20]
+        return Response(ConditionReportSerializer(reports, many=True).data)
+
+    def post(self, request, trail_slug):
+        trail      = get_object_or_404(Trail, slug=trail_slug)
+        status_val = request.data.get('status', '')
+        if status_val not in VALID_CONDITION_STATUSES:
+            return Response({'error': 'status must be one of: open, partial, closed, unknown'}, status=status.HTTP_400_BAD_REQUEST)
+        description = str(request.data.get('description', ''))[:1000]
+        report = ConditionReport.objects.create(
+            user=request.user, trail=trail,
+            status=status_val, description=description,
+        )
+        return Response(ConditionReportSerializer(report).data, status=status.HTTP_201_CREATED)
+
+
 # ── Trip Plans ─────────────────────────────────────────────────────────────────
 
 class TripPlansView(APIView):
@@ -158,10 +194,19 @@ class TripPlansView(APIView):
     def post(self, request):
         slug  = request.data.get('trail_slug')
         trail = get_object_or_404(Trail, slug=slug)
+
+        start_date_raw = request.data.get('start_date')
+        if not start_date_raw:
+            return Response({'error': 'start_date is required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            date_type.fromisoformat(str(start_date_raw))
+        except ValueError:
+            return Response({'error': 'start_date must be a valid date (YYYY-MM-DD)'}, status=status.HTTP_400_BAD_REQUEST)
+
         obj, created = TripPlan.objects.update_or_create(
             user=request.user, trail=trail,
             defaults={
-                'start_date': request.data.get('start_date'),
+                'start_date': start_date_raw,
                 'notes':      request.data.get('notes', ''),
             }
         )

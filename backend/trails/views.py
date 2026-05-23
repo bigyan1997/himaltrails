@@ -1,8 +1,15 @@
-from django.db.models import Count
+from django.db.models import Avg, Count
 from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from .models import Trail
 from .serializers import TrailListSerializer, TrailDetailSerializer
+
+
+def _annotated_list_qs(queryset):
+    return queryset.annotate(
+        _avg_rating=Avg('reviews__rating'),
+        _review_count=Count('reviews'),
+    )
 
 
 class TrailListView(generics.ListAPIView):
@@ -21,7 +28,7 @@ class TrailListView(generics.ListAPIView):
         if difficulty:
             queryset = queryset.filter(difficulty=difficulty)
 
-        return queryset
+        return _annotated_list_qs(queryset)
 
 
 class PopularTrailsView(generics.ListAPIView):
@@ -31,10 +38,8 @@ class PopularTrailsView(generics.ListAPIView):
 
     def get_queryset(self):
         return (
-            Trail.objects
-            .filter(is_published=True)
-            .annotate(num_reviews=Count('reviews'))
-            .order_by('-num_reviews')[:5]
+            _annotated_list_qs(Trail.objects.filter(is_published=True))
+            .order_by('-_review_count')[:5]
         )
 
 
@@ -42,5 +47,5 @@ class TrailDetailView(generics.RetrieveAPIView):
     """Returns a single trail by its slug."""
     serializer_class   = TrailDetailSerializer
     permission_classes = [AllowAny]
-    queryset           = Trail.objects.filter(is_published=True)
+    queryset           = Trail.objects.filter(is_published=True).prefetch_related('reviews', 'itinerary', 'permits', 'teahouses')
     lookup_field       = 'slug'

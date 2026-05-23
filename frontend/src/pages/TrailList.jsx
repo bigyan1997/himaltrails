@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
 import { getTrails } from '../services/api'
 import Navbar from '../components/Navbar'
 import { TrailCardSkeleton } from '../components/Skeleton'
@@ -333,7 +334,15 @@ export default function TrailList() {
             <p style={{ fontSize: '14px', color: '#999' }}>Try adjusting your search or clearing the filters.</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={page}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}
+            >
             {paginated.map(trail => {
               const badge = DIFFICULTY_BADGE[trail.difficulty] || { bg: '#F0EDE8', color: '#555' }
               return (
@@ -483,7 +492,8 @@ export default function TrailList() {
                 </Link>
               )
             })}
-          </div>
+            </motion.div>
+          </AnimatePresence>
         )}
 
         {/* Pagination */}

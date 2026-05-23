@@ -80,6 +80,26 @@ class CompletedTrail(models.Model):
         return f'{self.user.email} completed {self.trail.name}'
 
 
+class ConditionReport(models.Model):
+    STATUS_CHOICES = [
+        ('open',    'Open'),
+        ('partial', 'Partial restrictions'),
+        ('closed',  'Closed'),
+        ('unknown', 'Unknown'),
+    ]
+    user        = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='condition_reports')
+    trail       = models.ForeignKey('trails.Trail', on_delete=models.CASCADE, related_name='condition_reports')
+    status      = models.CharField(max_length=20, choices=STATUS_CHOICES)
+    description = models.TextField(blank=True, max_length=1000)
+    reported_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-reported_at']
+
+    def __str__(self):
+        return f'{self.user.email} reported {self.trail.name}: {self.status}'
+
+
 class TripPlan(models.Model):
     user       = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='trip_plans')
     trail      = models.ForeignKey('trails.Trail', on_delete=models.CASCADE, related_name='trip_plans')

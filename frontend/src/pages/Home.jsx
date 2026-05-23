@@ -170,7 +170,9 @@ export default function Home() {
   const isMobile = useMobile();
 
   useEffect(() => {
-    getPopularTrails().then((res) => setTrails(res.data));
+    getPopularTrails()
+      .then((res) => setTrails(res.data))
+      .catch(() => {});
   }, []);
 
   const featured = trails[0] || null;

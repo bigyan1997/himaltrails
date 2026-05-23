@@ -77,4 +77,8 @@ export const getTripPlans    = ()       => api.get('/planner/plans/');
 export const saveTripPlan    = (data)   => api.post('/planner/plans/', data);
 export const deleteTripPlan  = (trail_slug) => api.delete(`/planner/plans/${trail_slug}/`);
 
+// Planner — condition reports
+export const getConditionReports   = (trail_slug)       => api.get(`/planner/conditions/${trail_slug}/`);
+export const submitConditionReport = (trail_slug, data) => api.post(`/planner/conditions/${trail_slug}/`, data);
+
 export default api;

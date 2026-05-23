@@ -85,9 +85,12 @@ function PackingGenerator({ savedTrails, packingItems, onAdd }) {
   const handleGenerate = async () => {
     if (!newSuggestions.length) { setDone(true); return }
     setAdding(true)
-    for (const s of newSuggestions) await onAdd(s.name, s.category)
-    setAdding(false)
-    setDone(true)
+    try {
+      for (const s of newSuggestions) await onAdd(s.name, s.category)
+      setDone(true)
+    } finally {
+      setAdding(false)
+    }
   }
 
   return (
@@ -141,66 +144,86 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user) return
-    getSavedTrails().then(r => setSavedTrails(r.data))
-    getPackingList().then(r => setPackingItems(r.data))
-    getCompletedTrails().then(r => setCompletedTrails(r.data))
-    getTripPlans().then(r => setTripPlans(r.data))
+    getSavedTrails().then(r => setSavedTrails(r.data)).catch(() => {})
+    getPackingList().then(r => setPackingItems(r.data)).catch(() => {})
+    getCompletedTrails().then(r => setCompletedTrails(r.data)).catch(() => {})
+    getTripPlans().then(r => setTripPlans(r.data)).catch(() => {})
   }, [user])
 
   const handleUnsave = async (slug) => {
-    await unsaveTrail(slug)
-    setSavedTrails(t => t.filter(s => s.trail.slug !== slug))
-    if (activeNote?.trail_slug === slug) setActiveNote(null)
+    try {
+      await unsaveTrail(slug)
+      setSavedTrails(t => t.filter(s => s.trail.slug !== slug))
+      if (activeNote?.trail_slug === slug) setActiveNote(null)
+    } catch (_) {}
   }
 
   const openNote = async (trail) => {
-    const res = await getNote(trail.slug)
-    setActiveNote(res.data)
-    setNoteText(res.data.content || '')
+    try {
+      const res = await getNote(trail.slug)
+      setActiveNote(res.data)
+      setNoteText(res.data.content || '')
+    } catch (_) {}
   }
 
   const handleNoteSave = useCallback(async () => {
     if (!activeNote) return
     setNoteSaving(true)
-    const res = await saveNote(activeNote.trail_slug, noteText)
-    setActiveNote(res.data)
-    setNoteSaving(false)
+    try {
+      const res = await saveNote(activeNote.trail_slug, noteText)
+      setActiveNote(res.data)
+    } catch (_) {
+    } finally {
+      setNoteSaving(false)
+    }
   }, [activeNote, noteText])
 
   const handleAddItem = async (e) => {
     e.preventDefault()
     if (!newItem.trim()) return
-    const res = await addPackingItem({ name: newItem.trim(), category: newCat })
-    setPackingItems(items => [...items, res.data])
-    setNewItem('')
+    try {
+      const res = await addPackingItem({ name: newItem.trim(), category: newCat })
+      setPackingItems(items => [...items, res.data])
+      setNewItem('')
+    } catch (_) {}
   }
 
   const handleToggle = async (item) => {
-    const res = await updatePackingItem(item.id, { checked: !item.checked })
-    setPackingItems(items => items.map(i => i.id === item.id ? res.data : i))
+    try {
+      const res = await updatePackingItem(item.id, { checked: !item.checked })
+      setPackingItems(items => items.map(i => i.id === item.id ? res.data : i))
+    } catch (_) {}
   }
 
   const handleDeleteItem = async (id) => {
-    await deletePackingItem(id)
-    setPackingItems(items => items.filter(i => i.id !== id))
+    try {
+      await deletePackingItem(id)
+      setPackingItems(items => items.filter(i => i.id !== id))
+    } catch (_) {}
   }
 
   const handleSavePlan = async (slug) => {
     if (!planDate) return
     setPlanSaving(true)
-    const res = await saveTripPlan({ trail_slug: slug, start_date: planDate })
-    setTripPlans(plans => {
-      const exists = plans.find(p => p.trail.slug === slug)
-      return exists ? plans.map(p => p.trail.slug === slug ? res.data : p) : [...plans, res.data]
-    })
-    setPlanningSlug(null)
-    setPlanDate('')
-    setPlanSaving(false)
+    try {
+      const res = await saveTripPlan({ trail_slug: slug, start_date: planDate })
+      setTripPlans(plans => {
+        const exists = plans.find(p => p.trail.slug === slug)
+        return exists ? plans.map(p => p.trail.slug === slug ? res.data : p) : [...plans, res.data]
+      })
+      setPlanningSlug(null)
+      setPlanDate('')
+    } catch (_) {
+    } finally {
+      setPlanSaving(false)
+    }
   }
 
   const handleDeletePlan = async (slug) => {
-    await deleteTripPlan(slug)
-    setTripPlans(plans => plans.filter(p => p.trail.slug !== slug))
+    try {
+      await deleteTripPlan(slug)
+      setTripPlans(plans => plans.filter(p => p.trail.slug !== slug))
+    } catch (_) {}
   }
 
   const groupedPacking = CATEGORIES.reduce((acc, cat) => {
@@ -219,7 +242,8 @@ export default function Dashboard() {
     transition: 'all 0.2s',
   })
 
-  const upcomingPlans = tripPlans.filter(p => new Date(p.start_date) >= new Date())
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const upcomingPlans = tripPlans.filter(p => p.start_date >= todayStr)
   const savedSlugs = new Set(savedTrails.map(s => s.trail.slug))
 
   return (
@@ -382,11 +406,12 @@ export default function Dashboard() {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {tripPlans.sort((a, b) => new Date(a.start_date) - new Date(b.start_date)).map(plan => {
-                  const start = new Date(plan.start_date)
-                  const end   = new Date(plan.end_date)
-                  const isPast = end < new Date()
-                  const daysUntil = Math.ceil((start - new Date()) / 86400000)
+                {[...tripPlans].sort((a, b) => a.start_date.localeCompare(b.start_date)).map(plan => {
+                  const start = new Date(plan.start_date + 'T00:00:00')
+                  const end   = new Date(plan.end_date   + 'T00:00:00')
+                  const today = new Date(); today.setHours(0, 0, 0, 0)
+                  const isPast = end < today
+                  const daysUntil = Math.ceil((start - today) / 86400000)
                   return (
                     <div key={plan.id} style={{ backgroundColor: '#FFFFFF', border: `1px solid ${isPast ? '#E8E5E0' : '#C8E6C9'}`, borderRadius: '20px', padding: isMobile ? '20px' : '24px 32px', display: 'flex', gap: '24px', alignItems: 'flex-start', flexDirection: isMobile ? 'column' : 'row', opacity: isPast ? 0.6 : 1 }}>
                       <div style={{ backgroundColor: isPast ? '#F0EDE8' : '#1A3A2A', borderRadius: '14px', padding: '16px 20px', textAlign: 'center', flexShrink: 0, minWidth: '80px' }}>
@@ -462,7 +487,7 @@ export default function Dashboard() {
                         {trail.name}
                       </h3>
                       <p style={{ fontSize: '12px', color: '#AAA', marginBottom: '12px' }}>
-                        Completed {new Date(completed_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                        {completed_at ? `Completed ${new Date(completed_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}` : 'Completed'}
                       </p>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
                         {trail.duration_days && <span style={{ fontSize: '11px', backgroundColor: '#F0EDE8', color: '#666', padding: '3px 10px', borderRadius: '12px' }}>{trail.duration_days}d</span>}
