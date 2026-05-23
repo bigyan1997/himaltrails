@@ -1,10 +1,11 @@
 from django.contrib import admin
 from django.urls import path, include
 from users.views import GoogleLoginView
-from trails.views import GuideListView
+from trails.views import GuideListView, sitemap_xml
 
 urlpatterns = [
     path('admin/',                    admin.site.urls),
+    path('sitemap.xml',               sitemap_xml),
     path('api/trails/',               include('trails.urls')),
     path('api/guides/',               GuideListView.as_view()),
     path('api/auth/',                 include('dj_rest_auth.urls')),

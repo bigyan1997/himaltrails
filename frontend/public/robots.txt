@@ -5,3 +5,4 @@ Disallow: /login
 Disallow: /register
 
 Sitemap: https://himaltrails.com/sitemap.xml
+

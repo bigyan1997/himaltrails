@@ -1,8 +1,47 @@
 from django.db.models import Avg, Count
+from django.http import HttpResponse
+from django.utils import timezone
 from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from .models import Trail, Guide
 from .serializers import TrailListSerializer, TrailDetailSerializer, GuideSerializer
+
+SITE_URL = 'https://himaltrails.com'
+
+STATIC_URLS = [
+    ('/',           '1.0', 'weekly'),
+    ('/trails',     '0.9', 'daily'),
+    ('/map',        '0.7', 'weekly'),
+    ('/guides',     '0.7', 'weekly'),
+    ('/peaks',      '0.6', 'monthly'),
+    ('/itinerary',  '0.6', 'monthly'),
+]
+
+def sitemap_xml(request):
+    today = timezone.now().date().isoformat()
+    slugs = Trail.objects.filter(is_published=True).values_list('slug', flat=True)
+
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>',
+             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+
+    for path, priority, freq in STATIC_URLS:
+        lines.append(
+            f'  <url><loc>{SITE_URL}{path}</loc>'
+            f'<lastmod>{today}</lastmod>'
+            f'<changefreq>{freq}</changefreq>'
+            f'<priority>{priority}</priority></url>'
+        )
+
+    for slug in slugs:
+        lines.append(
+            f'  <url><loc>{SITE_URL}/trails/{slug}</loc>'
+            f'<lastmod>{today}</lastmod>'
+            f'<changefreq>weekly</changefreq>'
+            f'<priority>0.8</priority></url>'
+        )
+
+    lines.append('</urlset>')
+    return HttpResponse('\n'.join(lines), content_type='application/xml')
 
 
 def _annotated_list_qs(queryset):
